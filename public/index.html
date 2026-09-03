@@ -647,6 +647,7 @@
         </div>
         <span id="net-indicator">CO-OP: OFFLINE</span>
         <button class="cmd-btn" id="btn-music">MUSIC: OFF</button>
+        <button class="cmd-btn" id="btn-sfx">SFX: ON</button>
         <button class="cmd-btn" id="btn-fullscreen" title="Toggle fullscreen">⛶ FULLSCREEN</button>
         <button class="cmd-btn" id="btn-pause">PAUSE</button>
       </div>
@@ -961,6 +962,121 @@
     let audioCtx = null;
     let musicOn = false;
     let musicNodes = [];
+    let sfxOn = true;
+
+    // ============================================================
+    // PHASE 7: PROCEDURAL COMBAT SFX
+    // Same dependency-free Web Audio approach as the ambient music and
+    // studio chime -- short synthesized blasts/clicks/thuds instead of
+    // audio files, sharing the single lazily-created audioCtx.
+    // ============================================================
+    function getSfxCtx() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = audioCtx || new AC();
+        if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+        return audioCtx;
+      } catch (e) { return null; }
+    }
+    function sfxNoiseBurst(ctx, master, dur, filterFreq, filterType, peak, startAt) {
+      const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * dur)), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const src = ctx.createBufferSource(); src.buffer = buffer;
+      const filt = ctx.createBiquadFilter(); filt.type = filterType || 'lowpass'; filt.frequency.value = filterFreq;
+      const g = ctx.createGain(); g.gain.setValueAtTime(peak, startAt); g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
+      src.connect(filt).connect(g).connect(master);
+      src.start(startAt); src.stop(startAt + dur + 0.02);
+    }
+    function playGunshotSfx() {
+      if (!sfxOn) return;
+      const ctx = getSfxCtx(); if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const master = ctx.createGain(); master.gain.value = 0.5; master.connect(ctx.destination);
+        sfxNoiseBurst(ctx, master, 0.16, 1800, 'bandpass', 0.9, now);
+        const thump = ctx.createOscillator(); const tg = ctx.createGain();
+        thump.type = 'triangle'; thump.frequency.setValueAtTime(140, now); thump.frequency.exponentialRampToValueAtTime(46, now + 0.12);
+        tg.gain.setValueAtTime(0.55, now); tg.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+        thump.connect(tg).connect(master); thump.start(now); thump.stop(now + 0.18);
+      } catch (e) {}
+    }
+    function playDryFireSfx() {
+      if (!sfxOn) return;
+      const ctx = getSfxCtx(); if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const master = ctx.createGain(); master.gain.value = 0.35; master.connect(ctx.destination);
+        sfxNoiseBurst(ctx, master, 0.04, 2600, 'highpass', 0.6, now);
+      } catch (e) {}
+    }
+    function playMeleeSfx() {
+      if (!sfxOn) return;
+      const ctx = getSfxCtx(); if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const master = ctx.createGain(); master.gain.value = 0.45; master.connect(ctx.destination);
+        sfxNoiseBurst(ctx, master, 0.09, 500, 'lowpass', 0.7, now);
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'square'; osc.frequency.setValueAtTime(90, now); osc.frequency.exponentialRampToValueAtTime(48, now + 0.1);
+        g.gain.setValueAtTime(0.3, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+        osc.connect(g).connect(master); osc.start(now); osc.stop(now + 0.13);
+      } catch (e) {}
+    }
+    function playReloadSfx() {
+      if (!sfxOn) return;
+      const ctx = getSfxCtx(); if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const master = ctx.createGain(); master.gain.value = 0.4; master.connect(ctx.destination);
+        [0, 0.09].forEach(delay => sfxNoiseBurst(ctx, master, 0.03, 3200, 'highpass', 0.55, now + delay));
+      } catch (e) {}
+    }
+    function playHitMarkerSfx() {
+      if (!sfxOn) return;
+      const ctx = getSfxCtx(); if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const master = ctx.createGain(); master.gain.value = 0.28; master.connect(ctx.destination);
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'square'; osc.frequency.setValueAtTime(1200, now);
+        g.gain.setValueAtTime(0.4, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+        osc.connect(g).connect(master); osc.start(now); osc.stop(now + 0.08);
+      } catch (e) {}
+    }
+    function playEnemyDeathSfx() {
+      if (!sfxOn) return;
+      const ctx = getSfxCtx(); if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const master = ctx.createGain(); master.gain.value = 0.32; master.connect(ctx.destination);
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+        g.gain.setValueAtTime(0.3, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+        osc.connect(g).connect(master); osc.start(now); osc.stop(now + 0.46);
+      } catch (e) {}
+    }
+    function playHordeWarningSfx() {
+      if (!sfxOn) return;
+      const ctx = getSfxCtx(); if (!ctx) return;
+      try {
+        const now = ctx.currentTime;
+        const master = ctx.createGain(); master.gain.value = 0.4; master.connect(ctx.destination);
+        [0, 0.22, 0.44].forEach(delay => {
+          const osc = ctx.createOscillator(); const g = ctx.createGain();
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, now + delay);
+          g.gain.setValueAtTime(0.0001, now + delay); g.gain.linearRampToValueAtTime(0.35, now + delay + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.32);
+          osc.connect(g).connect(master); osc.start(now + delay); osc.stop(now + delay + 0.34);
+        });
+      } catch (e) {}
+    }
+    function toggleSfx() { sfxOn = !sfxOn; setSfxButtons(); }
+    function setSfxButtons() {
+      const label = `SFX: ${sfxOn ? 'ON' : 'OFF'}`;
+      const el = document.getElementById('btn-sfx'); if (el) el.innerText = label;
+    }
 
     // ============================================================
     // PHASE 1: ROOM + REAL-TIME PLAYER MOVEMENT
@@ -1041,6 +1157,11 @@
           }
         } else if(msg.type==='enemy_down') {
           addLog(`${msg.by||'A marshal'} put down a ${msg.enemyName||'threat'}.`, 'success');
+          playEnemyDeathSfx();
+        } else if(msg.type==='horde_warning') {
+          showToast('BLIZZARD SURGE', msg.message||'Something big is moving through the whiteout.');
+          addLog(msg.message||'A blizzard surge is bearing down on the expedition!', 'danger');
+          playHordeWarningSfx();
         }
       };
       ws.onclose=()=>{ multiplayer.connected=false; multiplayer.players.clear(); if(multiplayer.joined) setNetStatus('CO-OP: DISCONNECTED'); else setNetStatus('CO-OP: OFFLINE'); };
@@ -1071,15 +1192,16 @@
       const now=performance.now();
       const cd = action==='fire' ? 340 : 420;
       if(now - multiplayer.lastCombatSent < cd) return;
-      if(action==='fire' && player.ammo<=0){ addLog('*CLICK* Empty chamber -- reload!','warning'); return; }
+      if(action==='fire' && player.ammo<=0){ addLog('*CLICK* Empty chamber -- reload!','warning'); playDryFireSfx(); return; }
       multiplayer.lastCombatSent = now;
-      if(action==='fire'){ player.ammo--; updateUI(); }
+      if(action==='fire'){ player.ammo--; updateUI(); playGunshotSfx(); } else { playMeleeSfx(); }
       multiplayer.ws.send(JSON.stringify({type:'combat_action',action}));
     }
     function drawMultiplayerEnemies(cameraX, cameraY) {
       (multiplayer.enemies||[]).forEach(e => {
         if (e.region && e.region !== (multiplayer.world?.region||'timber')) return;
-        const sprite = (e.hitTimer>0) ? shamblerSprites.hit : shamblerSprites.normal;
+        const spriteSet = enemySpritesByType[e.type] || shamblerSprites;
+        const sprite = (e.hitTimer>0) ? spriteSet.hit : spriteSet.normal;
         const img = sprite[e.isMoving ? (e.walkAnimFrame||0) : 0];
         const footX = cameraX + (e.pixelX + TILE_SIZE/2) * WORLD_SCALE;
         const footY = cameraY + (e.pixelY + TILE_SIZE) * WORLD_SCALE;
@@ -1106,6 +1228,10 @@
           updateUI();
         }
         addLog(`${msg.by||'A marshal'} used a shared ${msg.item||'supply'}.`, 'success');
+      }
+      if(msg.event==='crafted') {
+        addLog(`${msg.by||'A marshal'} crafted supplies from salvaged scrap.`, 'success');
+        if(rpg.panel==='inventory') renderInventory();
       }
     }
     window.addEventListener('beforeunload',()=>{ try{multiplayer.ws?.close();}catch(e){} });
@@ -1733,6 +1859,11 @@
     const MAX_OPEN_WORLD_ENEMIES = 5;
     let lastEnemyTick = 0;
     let lastEnemySpawnCheck = 0;
+    // PHASE 7: BLIZZARD SURGE (horde events) -- solo-only trigger; the
+    // multiplayer/co-op equivalent lives server-side in server.js so every
+    // marshal in the expedition sees the same surge at the same time.
+    let nextHordeAt = 0;
+    let hordeCooldownArmed = false;
 
     function buildShamblerSVG(frame, hitFlash) {
       const bob = (frame === 1 || frame === 3) ? -1 : 0;
@@ -1772,6 +1903,88 @@
       shamblerSprites.hit[f] = hImg;
     }
 
+    // Rime Walker -- taller, upright, gaunt-armed gait (vs. the Shambler's
+    // hunched lurch), pale frostbitten skin tone so it reads as a distinct
+    // silhouette at a glance even before the HP bar or name confirms it.
+    function buildWalkerSVG(frame, hitFlash) {
+      const swing = frame % 2 === 0 ? 0 : 1;
+      const step = (frame === 1) ? 1 : (frame === 3) ? -1 : 0;
+      const body = hitFlash ? '#eef2f6' : '#7f8a95';
+      const dark = hitFlash ? '#dbe3ea' : '#4a5561';
+      const skin = hitFlash ? '#f8fafc' : '#c9cdb8';
+      let p = '';
+      const add = (x,y,w,h,c) => p += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+      p += `<ellipse cx="16" cy="38" rx="7" ry="2" fill="#0a0d10" opacity=".4"/>`;
+      // Long, upright legs -- an even, marching stride rather than a lurch.
+      add(11 + step, 26, 4, 11, dark);
+      add(17 - step, 26, 4, 11, dark);
+      // Tall, narrow torso -- a threadbare coat.
+      add(10, 12, 13, 15, body);
+      add(10, 12, 13, 2, '#2a323a');
+      // Arms swing opposite the legs, straight rather than hanging.
+      add(6 - swing, 13, 3, 13, dark);
+      add(24 + swing - 3, 13, 3, 13, dark);
+      // Gaunt head, held level and forward -- looking straight at its prey.
+      add(11, 6, 10, 8, skin);
+      add(13, 9, 1, 1, '#0a0d10');
+      add(18, 9, 1, 1, '#0a0d10');
+      add(12, 13, 8, 1, '#1c2228');
+      // Frost patches.
+      add(20, 15, 2, 2, '#dce8eb');
+      add(9, 30, 2, 1, '#dce8eb');
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40" shape-rendering="crispEdges">${p}</svg>`;
+    }
+    const walkerSprites = { normal: [], hit: [] };
+    for (let f = 0; f < 4; f++) {
+      const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildWalkerSVG(f, false));
+      walkerSprites.normal[f] = img;
+      const hImg = new Image(); hImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildWalkerSVG(f, true));
+      walkerSprites.hit[f] = hImg;
+    }
+
+    // Frozen Outlaw -- widest, most human silhouette: a wide-brim hat and a
+    // holstered sidearm distinguish it as the deadliest of the three at a
+    // glance, wrapped in a dark duster instead of a torn work coat.
+    function buildOutlawSVG(frame, hitFlash) {
+      const bob = (frame === 1 || frame === 3) ? -1 : 0;
+      const lurch = frame % 2 === 0 ? 0 : 1;
+      const body = hitFlash ? '#f1f2f4' : '#2c2420';
+      const dark = hitFlash ? '#dde0e3' : '#1a1512';
+      const hat = hitFlash ? '#e8e3d8' : '#463a2c';
+      const skin = hitFlash ? '#f8fafc' : '#a68f7a';
+      let p = '';
+      const add = (x,y,w,h,c) => p += `<rect x="${x}" y="${y+bob}" width="${w}" height="${h}" fill="${c}"/>`;
+      p += `<ellipse cx="16" cy="37" rx="9" ry="2.4" fill="#0a0d10" opacity=".45"/>`;
+      // Wide, planted stance -- a heavier, more deliberate gait.
+      add(8 + lurch, 27, 6, 9, dark);
+      add(18 - lurch, 27, 6, 9, dark);
+      // Broad duster coat.
+      add(7, 15, 18, 14, body);
+      add(7, 15, 18, 2, dark);
+      // One arm resting near a holstered sidearm.
+      add(5, 17, 3, 11, dark);
+      add(23, 16, 3, 8, dark);
+      add(23, 23, 4, 4, '#5b4a34');
+      // Head with a wide hat brim -- the most readable silhouette of the three.
+      add(12, 9, 9, 7, skin);
+      add(14, 12, 1, 1, '#0a0d10');
+      add(19, 12, 1, 1, '#0a0d10');
+      add(9, 6, 15, 3, hat);
+      add(12, 3, 9, 4, hat);
+      // Frost patches.
+      add(9, 30, 2, 1, '#dce8eb');
+      add(22, 18, 2, 2, '#dce8eb');
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40" shape-rendering="crispEdges">${p}</svg>`;
+    }
+    const outlawSprites = { normal: [], hit: [] };
+    for (let f = 0; f < 4; f++) {
+      const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildOutlawSVG(f, false));
+      outlawSprites.normal[f] = img;
+      const hImg = new Image(); hImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildOutlawSVG(f, true));
+      outlawSprites.hit[f] = hImg;
+    }
+    const enemySpritesByType = { shambler: shamblerSprites, walker: walkerSprites, outlaw: outlawSprites };
+
     function spawnEnemyNear(cx, cy, typeId) {
       typeId = typeId || (Math.random() < 0.15 ? 'outlaw' : Math.random() < 0.4 ? 'walker' : 'shambler');
       const def = ENEMY_TYPES[typeId];
@@ -1800,9 +2013,30 @@
       if (Math.random() < chance) spawnEnemyNear(player.tileX, player.tileY, null);
     }
 
+    // A periodic wave of extra threats converging on the player -- a
+    // brief, telegraphed spike in danger and blizzard visibility rather
+    // than a constant background threat. Solo-only (see note above).
+    function maybeTriggerHorde(now) {
+      if (multiplayer.joined) return;
+      if (!nextHordeAt) { nextHordeAt = now + 90000 + Math.random() * 30000; return; }
+      if (now < nextHordeAt) return;
+      nextHordeAt = now + 210000 + Math.random() * 120000; // next surge in 3.5-5.5 min
+      showToast('BLIZZARD SURGE', 'The whiteout thickens -- something is moving through the timber in numbers.');
+      addLog('BLIZZARD SURGE: the frozen dead are on the move in numbers!', 'danger');
+      playHordeWarningSfx();
+      blizzardTarget = 1;
+      const burst = 3 + Math.floor(Math.random() * 3); // 3-5 extra threats
+      for (let i = 0; i < burst; i++) {
+        const roll = Math.random();
+        spawnEnemyNear(player.tileX, player.tileY, roll < 0.25 ? 'outlaw' : roll < 0.6 ? 'walker' : 'shambler');
+      }
+      setTimeout(() => { blizzardTarget = 0; addLog('The surge passes. The blizzard settles.', 'success'); }, 24000);
+    }
+
     function updateEnemies(now) {
       if (multiplayer.joined) return; // rendered from server state instead
       if (!gameStarted || paused) return;
+      maybeTriggerHorde(now);
       if (now - lastEnemyTick < 110) return;
       const dt = now - lastEnemyTick;
       lastEnemyTick = now;
@@ -1872,6 +2106,7 @@
     function killEnemyLocal(e) {
       enemies = enemies.filter(x => x.id !== e.id);
       addLog(`${e.name} falls into the snow.`, 'success');
+      playEnemyDeathSfx();
       const def = ENEMY_TYPES[e.type];
       if (Math.random() < def.scrapChance + trapperScrapBonus() * 0.2) {
         const amt = 1 + trapperScrapBonus();
@@ -1885,15 +2120,17 @@
       if (multiplayer.joined) { multiplayerCombatAction('fire'); return; }
       const target = nearestEnemy(3.5);
       if (!target) { return; }
-      if (player.ammo <= 0) { addLog('*CLICK* Empty chamber -- reload!', 'warning'); return; }
+      if (player.ammo <= 0) { addLog('*CLICK* Empty chamber -- reload!', 'warning'); playDryFireSfx(); return; }
       const now = performance.now();
       if (now - (combatFire._last||0) < 340) return;
       combatFire._last = now;
       player.ammo--; updateUI();
+      playGunshotSfx();
       if (Math.random() < 0.82) {
         const dmg = 2 + Math.floor(Math.random()*2);
         target.hp = Math.max(0, target.hp - dmg); target.hitTimer = 160;
         addLog(`.44 round hits the ${target.name} -- ${dmg} damage!`, 'warning');
+        playHitMarkerSfx();
         if (target.hp <= 0) killEnemyLocal(target);
       } else {
         addLog('Shot lost in the blizzard.', '');
@@ -1907,11 +2144,13 @@
       const now = performance.now();
       if (now - (combatMelee._last||0) < 420) return;
       combatMelee._last = now;
+      playMeleeSfx();
       const brawler = player.classId === 'brawler';
       if (Math.random() < (brawler ? 0.9 : 0.75)) {
         const dmg = brawler ? 2 + Math.floor(Math.random()*2) : 1;
         target.hp = Math.max(0, target.hp - dmg); target.hitTimer = 160;
         addLog(`Rifle butt cracks the ${target.name} -- ${dmg} damage!`, 'warning');
+        playHitMarkerSfx();
         if (target.hp <= 0) killEnemyLocal(target);
       } else {
         addLog(`The ${target.name} shrugs off the shove.`, '');
@@ -1925,12 +2164,14 @@
       const load = Math.min(player.maxClip - player.ammo, player.reserveAmmo);
       player.ammo += load; player.reserveAmmo -= load;
       addLog(`Chambered ${load} round${load === 1 ? '' : 's'}. .44 ${player.ammo}/${player.maxClip}.`, 'success');
+      playReloadSfx();
       updateUI();
     }
 
     function drawEnemies(cameraX, cameraY) {
       enemies.forEach(e => {
-        const sprite = e.hitTimer > 0 ? shamblerSprites.hit : shamblerSprites.normal;
+        const spriteSet = enemySpritesByType[e.type] || shamblerSprites;
+        const sprite = e.hitTimer > 0 ? spriteSet.hit : spriteSet.normal;
         const img = sprite[e.isMoving ? e.walkAnimFrame : 0];
         const footX = cameraX + (e.pixelX + TILE_SIZE/2) * WORLD_SCALE;
         const footY = cameraY + (e.pixelY + TILE_SIZE) * WORLD_SCALE;
@@ -1953,8 +2194,58 @@
       speedX: 2 + Math.random() * 2,
       speedY: 1 + Math.random() * 2,
       r: 1 + Math.random() * 1.5,
+      baseAlpha: 0.3 + Math.random() * 0.5,
       alpha: 0.3 + Math.random() * 0.5
     }));
+
+    // ============================================================
+    // PHASE 7: DAY/NIGHT + WEATHER CYCLE
+    // Purely a client-side visual layer -- an ambient lighting overlay that
+    // slowly cycles dawn -> day -> dusk -> night -> dawn, plus a "blizzard
+    // intensity" knob that thickens the existing snowfall. Each client runs
+    // its own clock (starting the moment the game begins) rather than a
+    // server-synced one, since it's atmosphere, not simulation state.
+    // ============================================================
+    const DAY_CYCLE_MS = 6 * 60 * 1000; // one full day/night cycle, real minutes
+    let dayNightStart = 0;
+    let blizzardIntensity = 0; // 0 = calm snowfall, 1 = full horde-surge whiteout
+    let blizzardTarget = 0;
+    function dayPhase() {
+      if (!dayNightStart) dayNightStart = performance.now();
+      const t = ((performance.now() - dayNightStart) % DAY_CYCLE_MS) / DAY_CYCLE_MS; // 0..1
+      // Darkness follows a smooth wave: brightest at t=0 (high noon), darkest at t=0.5 (deep night).
+      const darkness = (1 - Math.cos(t * Math.PI * 2)) / 2; // 0..1
+      let label = 'DAY';
+      if (t < 0.06 || t > 0.94) label = 'DAWN';
+      else if (t < 0.42) label = 'DAY';
+      else if (t < 0.58) label = 'DUSK';
+      else label = 'NIGHT';
+      return { t, darkness, label };
+    }
+    function drawAmbientLighting() {
+      const { darkness } = dayPhase();
+      // Cold blue-night tint, layered with 'multiply' so it darkens without
+      // flattening the scene to a flat color, then a thin warm dawn/dusk
+      // fringe for readability of the transition.
+      const nightAlpha = Math.pow(darkness, 1.4) * 0.62;
+      if (nightAlpha > 0.01) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = `rgba(${Math.round(60-40*darkness)}, ${Math.round(80-55*darkness)}, ${Math.round(130-40*darkness)}, 1)`;
+        ctx.globalAlpha = nightAlpha;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+      // Blizzard surge darkening -- a heavier whiteout tint on top, additive
+      // rather than multiply so it reads as thick blowing snow, not shadow.
+      if (blizzardIntensity > 0.02) {
+        ctx.save();
+        ctx.globalAlpha = blizzardIntensity * 0.22;
+        ctx.fillStyle = '#dbe8f0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+    }
 
     const keys = {};
     window.addEventListener('keydown', e => {
@@ -2277,6 +2568,7 @@
     };
     document.getElementById('btn-music').onclick = toggleMusic;
     document.getElementById('btn-title-music').onclick = toggleMusic;
+    document.getElementById('btn-sfx').onclick = toggleSfx;
 
     document.getElementById('b-btn-shoot').onclick = () => battleAction('shoot');
     document.getElementById('b-btn-shove').onclick = () => battleAction('shove');
@@ -2422,17 +2714,26 @@
       // Drawn after the world layer so his scale is independent of tree/prop scale.
       drawRickSprite(cameraX, cameraY);
 
-      // Blizzard Snow Flurries
+      // Day/night ambient tint + blizzard-surge whiteout, drawn over the
+      // world and actors but under the snow particles so falling snow stays crisp.
+      drawAmbientLighting();
+
+      // Ease blizzard intensity toward its target so surge events ramp
+      // in/out smoothly instead of snapping.
+      blizzardIntensity += (blizzardTarget - blizzardIntensity) * 0.02;
+
+      // Blizzard Snow Flurries -- density/speed scale up during a surge.
       ctx.fillStyle = '#ffffff';
+      const stormSpeedMul = 1 + blizzardIntensity * 1.4;
       snowFlakes.forEach(f => {
-        f.x += f.speedX;
-        f.y += f.speedY;
+        f.x += f.speedX * stormSpeedMul;
+        f.y += f.speedY * stormSpeedMul;
         if (f.x > canvas.width) f.x = -10;
         if (f.y > canvas.height) f.y = -10;
 
-        ctx.globalAlpha = f.alpha;
+        ctx.globalAlpha = Math.min(1, f.baseAlpha + blizzardIntensity * 0.4);
         ctx.beginPath();
-        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.arc(f.x, f.y, f.r * (1 + blizzardIntensity * 0.3), 0, Math.PI * 2);
         ctx.fill();
       });
       ctx.globalAlpha = 1.0;
@@ -2555,7 +2856,15 @@
       { id:'note-grave', x:14, y:24, title:'MARKED GRAVE',
         text:"A rifle stock, jammed butt-first into a mound of packed snow. Someone scratched into the wood: \"DON'T LET THEM KEEP THEIR TEETH. BURN WHAT YOU DROP.\"" },
       { id:'note-claws', x:11, y:19, title:'CLAW MARKS',
-        text:"Deep gouges score the bark of every tree in this clearing, shoulder-height and higher. Whatever's making them out here, there's more of it every winter." }
+        text:"Deep gouges score the bark of every tree in this clearing, shoulder-height and higher. Whatever's making them out here, there's more of it every winter." },
+      { id:'note-ledger', x:19, y:13, title:'BARROW CREEK LEDGER',
+        text:"A waterlogged trading post ledger, entries stopping mid-week. The last line, in a different, shakier hand: \"They don't feel the cold anymore. That's how you know.\"" },
+      { id:'note-timbermark', x:33, y:19, title:'LUMBER CAMP TALLY BOARD',
+        text:"A foreman's chalk tally, counting down workers instead of timber. The final mark isn't a tally at all -- just one word, pressed hard enough to crack the slate: \"RUN.\"" },
+      { id:'note-spike', x:29, y:24, title:'RAILWAY DISPATCH',
+        text:"A torn dispatch slip from Silverfrost Junction: \"THE LAST SPIKE holding the line, repeat, holding. Do not attempt Waystation Stockade after dark. Repeat: not after dark.\"" },
+      { id:'note-warden', x:32, y:27, title:'WARDEN\'S LAST ORDER',
+        text:"Nailed to the stockade gatepost, half-buried in drift: \"Gate stays SHUT till first light. Whatever's clawing at the iron tonight, it counted the shift change. Don't let it count twice.\"" }
     ];
     function checkFieldNotes() {
       FIELD_NOTES.forEach(n => {
@@ -2589,7 +2898,7 @@
     mapOverlay.innerHTML='<div class="rpg-panel"><div class="rpg-title">FIELD MAP // THE TIMBER LINE</div><div class="rpg-sub">M: close map · discovered locations are marked in amber</div><canvas id="map-canvas" width="840" height="600"></canvas></div>';
     viewport.appendChild(mapOverlay);
     const invOverlay = document.createElement('div'); invOverlay.className='rpg-overlay'; invOverlay.id='inventory-overlay';
-    invOverlay.innerHTML='<div class="rpg-panel"><div class="rpg-title">FIELD INVENTORY</div><div class="rpg-sub">I: close · supplies can be used from the field</div><div id="inventory-list" class="rpg-grid"></div><div style="margin-top:14px"><button class="rpg-btn" id="use-medkit">USE MEDKIT</button><button class="rpg-btn" id="eat-ration">EAT RATION</button><button class="rpg-btn" id="use-match">LIGHT TORCH</button></div></div>';
+    invOverlay.innerHTML='<div class="rpg-panel"><div class="rpg-title">FIELD INVENTORY</div><div class="rpg-sub">I: close · supplies can be used from the field</div><div id="inventory-list" class="rpg-grid"></div><div style="margin-top:14px"><button class="rpg-btn" id="use-medkit">USE MEDKIT</button><button class="rpg-btn" id="eat-ration">EAT RATION</button><button class="rpg-btn" id="use-match">LIGHT TORCH</button></div><div class="rpg-sub" style="margin-top:16px;border-top:1px solid #4a3620;padding-top:10px">FIELD CRAFTING -- improvise supplies from salvaged scrap</div><div id="craft-list" style="margin-top:6px"><button class="rpg-btn" id="craft-medkit">CRAFT MEDKIT (3 SCRAP)</button><button class="rpg-btn" id="craft-matches">CRAFT MATCHES (2 SCRAP)</button><button class="rpg-btn" id="craft-rations">CRAFT RATION (2 SCRAP)</button></div></div>';
     viewport.appendChild(invOverlay);
     const journalOverlay = document.createElement('div'); journalOverlay.className='rpg-overlay'; journalOverlay.id='journal-overlay';
     journalOverlay.innerHTML='<div class="rpg-panel"><div class="rpg-title">MARSHAL\'S JOURNAL // ACT I</div><div class="rpg-sub">J: close</div><div id="quest-list"></div></div>';
@@ -2674,6 +2983,30 @@
       if(multiplayer.joined){ sendWorldAction('use_item',{item:'matches'}); return; }
       if(rpg.inventory.matches>0){rpg.inventory.matches--;player.torch=100;addLog('A storm match catches. Torch restored.','success');updateUI();renderInventory();}
     };
+    // ============================================================
+    // PHASE 7: FIELD CRAFTING -- turns salvaged scrap into consumables.
+    // Mirrors the existing use-item pattern: solo mutates rpg.inventory
+    // directly, co-op sends a world_action so the server (the source of
+    // truth for the shared expedition inventory) applies it and rebroadcasts.
+    // ============================================================
+    const CRAFT_RECIPES = {
+      medkit:  { cost: 3, yields: { medkits: 1 }, label: 'a field medkit' },
+      matches: { cost: 2, yields: { matches: 2 }, label: 'two storm matches' },
+      rations: { cost: 2, yields: { rations: 1 }, label: 'a preserved ration' }
+    };
+    function craftItem(recipeId) {
+      const recipe = CRAFT_RECIPES[recipeId]; if (!recipe) return;
+      if (multiplayer.joined) { sendWorldAction('craft', { recipe: recipeId }); return; }
+      if ((rpg.inventory.scrap || 0) < recipe.cost) { addLog(`Not enough scrap to craft that (need ${recipe.cost}).`, 'warning'); return; }
+      rpg.inventory.scrap -= recipe.cost;
+      Object.entries(recipe.yields).forEach(([k, n]) => addInv(k, n));
+      addLog(`Salvaged materials into ${recipe.label}.`, 'success');
+      updateUI(); renderInventory();
+    }
+    document.getElementById('craft-medkit').onclick = () => craftItem('medkit');
+    document.getElementById('craft-matches').onclick = () => craftItem('matches');
+    document.getElementById('craft-rations').onclick = () => craftItem('rations');
+
     document.getElementById('retry-checkpoint').onclick=()=>{gameOverOverlay.style.display='none';rpg.gameOverShown=false;loadRPGGame();};
     document.getElementById('gameover-title').onclick=()=>{gameOverOverlay.style.display='none';titleScreen.style.display='flex';gameStarted=false;};
 

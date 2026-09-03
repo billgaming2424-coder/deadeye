@@ -47,6 +47,15 @@ Render-ready Node.js + WebSocket build.
 - **Removed internal dev labels** ("PHASE 1 CO-OP EXPEDITION", "PHASE 2 // SHARED EXPEDITION WORLD", "CO-OP ALPHA") that were leaking into player-facing UI.
 - **Mobile touch controls decluttered**: shrunk the action-button cluster, reorganized it into a tighter 3-column layout, and fixed a real gap where mobile players had no way to loot scavenge sites or open the stockade gate (added a dedicated LOOT button). The vehicle TRUCK button no longer clutters the cluster for solo players — it now only appears once you're actually in a co-op expedition.
 
+## Phase 7: The biggest update yet
+
+- **Combat sound**: procedurally synthesized (no audio files, same Web Audio approach as the ambient music) gunshots, dry-fire clicks, melee thuds, reload racks, hit markers, enemy death groans and a blizzard-surge warning sting. A new SFX: ON/OFF button sits next to the music toggle.
+- **Distinct enemy silhouettes**: Frost Shamblers, Rime Walkers and Frozen Outlaws used to share one sprite with only a color/name difference. Each now has its own hand-drawn silhouette and gait — hunched and lurching, tall and upright, or broad-shouldered with a wide-brim hat — readable at a glance in both solo and co-op.
+- **Blizzard Surge horde events**: every few minutes, a telegraphed wave of 3-6 extra threats converges on the player (or the whole expedition in co-op), with a warning toast, a warning sting, and a temporary whiteout intensifying the snowfall. Solo surges are client-timed; co-op surges are server-authoritative so every marshal in the room sees the same surge at the same time.
+- **Day/night + weather cycle**: a slow six-minute ambient lighting cycle (dawn/day/dusk/night) darkens the timberline over time, and snowfall visibly thickens during a Blizzard Surge. Purely atmospheric — doesn't affect enemy aggro or combat.
+- **Field crafting**: a new CRAFT section in the inventory panel turns salvaged iron scrap into medkits, storm matches or rations (3/2/2 scrap respectively). Works the same in solo and co-op, where the shared expedition scrap pool pays the cost.
+- **More frontier field notes**: four new environmental lore notes (Barrow Creek Ledger, Lumber Camp Tally Board, Railway Dispatch, Warden's Last Order) scattered near the existing waypoints, doubling the field-note count to eight and building the story toward the Waystation Stockade.
+
 ## Deploy on Render
 
 Create a **Web Service** from GitHub, pointed at this repository.

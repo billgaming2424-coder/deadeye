@@ -132,8 +132,23 @@ function spawnEnemyForRoom(room){
   }
 }
 
+// PHASE 7: BLIZZARD SURGE -- a periodic, server-authoritative wave of extra
+// threats shared by the whole expedition, mirroring the solo-side trigger
+// in index.html's maybeTriggerHorde(). Deliberately bypasses MAX_ROOM_ENEMIES
+// so a surge actually reads as a spike, not just the normal spawn rate.
+function maybeTriggerHorde(room){
+  const now=Date.now();
+  if(!room.nextHordeAt){ room.nextHordeAt=now+90000+Math.random()*30000; return; }
+  if(now<room.nextHordeAt) return;
+  room.nextHordeAt=now+210000+Math.random()*120000;
+  const burst=3+Math.floor(Math.random()*Math.max(1,room.players.size))+2;
+  for(let i=0;i<burst;i++) spawnEnemyForRoom(room);
+  broadcast(room,{type:'horde_warning',message:'The whiteout thickens -- something is moving through the timber in numbers.'});
+}
+
 function tickRoomEnemies(room){
   const now=Date.now();
+  maybeTriggerHorde(room);
   if(room.enemies.size<Math.min(2+room.players.size,MAX_ROOM_ENEMIES) && Math.random()<0.10){
     spawnEnemyForRoom(room);
   }
@@ -280,6 +295,14 @@ function applyWorldAction(room,player,msg){
     if((world.inventory[item]||0)<=0) return fail(player.ws,'The expedition has none of that item left.');
     world.inventory[item]--; world.revision++; broadcast(room,{type:'world_event',event:'item_used',item,by:player.name,byId:player.id}); sync(room); return;
   }
+  if(action==='craft'){
+    const recipes={medkit:{cost:3,yields:{medkits:1}},matches:{cost:2,yields:{matches:2}},rations:{cost:2,yields:{rations:1}}};
+    const recipe=recipes[String(msg.recipe||'')]; if(!recipe) return;
+    if((world.inventory.scrap||0)<recipe.cost) return fail(player.ws,'The expedition does not have enough scrap for that.');
+    world.inventory.scrap-=recipe.cost;
+    for(const [k,v] of Object.entries(recipe.yields)) world.inventory[k]=(world.inventory[k]||0)+v;
+    world.revision++; broadcast(room,{type:'world_event',event:'crafted',recipe:msg.recipe,by:player.name,byId:player.id}); sync(room); return;
+  }
 }
 
 function vehicleRiders(v){ return new Set([v.driverId,...v.passengers].filter(Boolean)); }
@@ -406,7 +429,7 @@ wss.on('connection',ws=>{
   ws.on('message',buf=>{
     let msg;try{msg=JSON.parse(buf.toString());}catch{return;}
     if(msg.type==='create_room'){
-      removePlayer(ws);const code=makeCode();const room={code,players:new Map(),world:makeWorld(),battle:null,lastEncounter:0,enemies:new Map()};
+      removePlayer(ws);const code=makeCode();const room={code,players:new Map(),world:makeWorld(),battle:null,lastEncounter:0,enemies:new Map(),nextHordeAt:0};
       room.enemyTickTimer=setInterval(()=>tickRoomEnemies(room),180);
       rooms.set(code,room);
       const id=makeId(),p={id,name:safeName(msg.name),characterConfig:safeCharacterConfig(msg.characterConfig),color:COLORS[0],region:'timber',tileX:3,tileY:3,targetX:3,targetY:3,pixelX:96,pixelY:96,dir:0,isMoving:false,walkAnimFrame:0,stepCount:0,ws};
