@@ -25,11 +25,14 @@ const LOOT = {
 
 function safeName(v){ return String(v||'Marshal').replace(/[^a-zA-Z0-9 _.-]/g,'').trim().slice(0,18)||'Marshal'; }
 const DEFAULT_CHAR_PALETTE={coatMain:'#2b3c46',hatMain:'#4a3322',skin:'#c58760',hair:'#2b1c15'};
+const VALID_CLASS_IDS=['marshal','scout','brawler','medic','trapper'];
 function safeHex(v,fallback){ return (typeof v==='string' && /^#[0-9a-fA-F]{6}$/.test(v)) ? v : fallback; }
+function safeClassId(v){ return VALID_CLASS_IDS.includes(v) ? v : 'marshal'; }
 function safeCharacterConfig(cc){
   cc=cc||{};
   return {
     name: safeName(cc.name),
+    classId: safeClassId(cc.classId),
     coatMain: safeHex(cc.coatMain, DEFAULT_CHAR_PALETTE.coatMain),
     hatMain: safeHex(cc.hatMain, DEFAULT_CHAR_PALETTE.hatMain),
     skin: safeHex(cc.skin, DEFAULT_CHAR_PALETTE.skin),
@@ -47,6 +50,178 @@ function makeWorld(){ return {
   region:'timber',
   vehicle:{id:'snow-truck-1',type:'snow_truck',region:'timber',x:31,y:24,dir:0,fuel:100,driverId:null,passengers:[]}
 };}
+// ============================================================
+// OPEN-WORLD CO-OP COMBAT (server-authoritative)
+// Enemies are real shared entities: every marshal in the room sees the
+// same wandering/chasing threats and can shoot or melee them directly,
+// no turn order, no scene transition. Per-player vitals (hp/ammo/torch)
+// stay client-reported like the rest of this server's model -- the
+// server owns enemy hp/position and simply tells a targeted client "you
+// were hit for N", trusting that client to apply it, same trust model
+// already used for movement.
+// A lightweight replica of the client's deterministic map keeps enemy
+// spawns/movement off of trees and walls in the Timber region; other
+// regions fall back to bounds-only movement (they're a Phase 3 add-on,
+// not this system's focus).
+const MAP_COLS=42, MAP_ROWS=30;
+const SERVER_MAP = (() => {
+  const m = new Array(MAP_COLS*MAP_ROWS);
+  for (let i=0;i<m.length;i++){
+    const x=i%MAP_COLS, y=Math.floor(i/MAP_COLS);
+    if (x===0||y===0||x===MAP_COLS-1||y===MAP_ROWS-1) { m[i]=1; continue; }
+    const n=(x*17+y*31+x*y*7)%23;
+    if (n===0||(n===5&&x%3===0)) m[i]=1;
+    else if (n===2||n===11) m[i]=2;
+    else m[i]=0;
+  }
+  const setTile=(x,y,t)=>{ if(x>=0&&y>=0&&x<MAP_COLS&&y<MAP_ROWS) m[y*MAP_COLS+x]=t; };
+  const clearArea=(cx,cy,r=2)=>{ for(let y=cy-r;y<=cy+r;y++) for(let x=cx-r;x<=cx+r;x++) setTile(x,y,0); };
+  clearArea(3,3,3); setTile(3,3,4);
+  for (let y=3;y<MAP_ROWS-2;y++) { setTile(5,y,0); if (y>10) setTile(6,y,0); }
+  for (let x=5;x<38;x++) setTile(x,12,0);
+  for (let y=12;y<27;y++) setTile(31,y,0);
+  for (let y=6;y<11;y++) for (let x=8;x<16;x++) if ((x+y)%3!==0) setTile(x,y,2);
+  for (let y=15;y<22;y++) for (let x=18;x<28;x++) if ((x*2+y)%4!==0) setTile(x,y,2);
+  for (let x=20;x<25;x++) setTile(x,12,3);
+  clearArea(18,12,2); clearArea(26,12,2);
+  for (let x=28;x<37;x++) setTile(x,26,3);
+  setTile(31,26,0); setTile(32,26,0);
+  clearArea(31,24,2);
+  setTile(5,12,4); setTile(31,18,4); setTile(31,24,4);
+  return m;
+})();
+function timberWalkable(x,y){ if(x<0||y<0||x>=MAP_COLS||y>=MAP_ROWS) return false; const t=SERVER_MAP[y*MAP_COLS+x]; return t!==1&&t!==3; }
+function isWalkableInRegion(region,x,y){
+  if (region==='timber') return timberWalkable(x,y);
+  return x>=1&&y>=1&&x<MAP_COLS-1&&y<MAP_ROWS-1;
+}
+
+// speed is px/tile-tick before the *6 applied in tickRoomEnemies, ticked every 180ms -- calibrated
+// against a player's own client-side walk pace (~120px/sec) so chase feels real instead of a crawl:
+// shambler stays outwalkable, walker keeps pace with a walking marshal, outlaw outpaces a walk
+// outright and forces a run-or-fight call. Mirror any change here in ENEMY_TYPES on the client.
+const ENEMY_TYPES={
+  shambler:{name:'Frost Shambler',hp:18,damage:7,aggro:4.5,speed:2.2,scrapChance:.55},
+  walker:{name:'Rime Walker',hp:26,damage:10,aggro:5.5,speed:2.9,scrapChance:.65},
+  outlaw:{name:'Frozen Outlaw',hp:34,damage:13,aggro:6,speed:5.4,scrapChance:.8}
+};
+const MAX_ROOM_ENEMIES=6;
+let nextEnemyId=1;
+
+function spawnEnemyForRoom(room){
+  const players=[...room.players.values()];
+  if(!players.length) return;
+  const anchor=players[Math.floor(Math.random()*players.length)];
+  const region=anchor.region||'timber';
+  const typeRoll=Math.random();
+  const typeId=typeRoll<0.15?'outlaw':typeRoll<0.4?'walker':'shambler';
+  const def=ENEMY_TYPES[typeId];
+  for(let tries=0;tries<10;tries++){
+    const ang=Math.random()*Math.PI*2, d=6+Math.random()*5;
+    const tx=Math.round(clamp(anchor.tileX+Math.cos(ang)*d,1,MAP_COLS-2));
+    const ty=Math.round(clamp(anchor.tileY+Math.sin(ang)*d,1,MAP_ROWS-2));
+    if(!isWalkableInRegion(region,tx,ty)) continue;
+    const id='e'+(nextEnemyId++);
+    room.enemies.set(id,{
+      id,type:typeId,name:def.name,region,
+      tileX:tx,tileY:ty,targetX:tx,targetY:ty,pixelX:tx*32,pixelY:ty*32,
+      dir:0,isMoving:false,walkAnimFrame:0,
+      hp:def.hp,maxHp:def.hp,state:'idle',lastAttackAt:0,lastMoveAt:0
+    });
+    return;
+  }
+}
+
+function tickRoomEnemies(room){
+  const now=Date.now();
+  if(room.enemies.size<Math.min(2+room.players.size,MAX_ROOM_ENEMIES) && Math.random()<0.10){
+    spawnEnemyForRoom(room);
+  }
+  for(const e of room.enemies.values()){
+    const def=ENEMY_TYPES[e.type];
+    let nearest=null,nearestDist=Infinity;
+    for(const p of room.players.values()){
+      if((p.region||'timber')!==e.region) continue;
+      const d=Math.hypot(p.tileX-e.tileX,p.tileY-e.tileY);
+      if(d<nearestDist){nearestDist=d;nearest=p;}
+    }
+    if(!nearest) continue;
+    if(e.state==='idle' && nearestDist<=def.aggro) e.state='chase';
+    else if(e.state==='chase' && nearestDist>def.aggro+3) e.state='idle';
+
+    if(!e.isMoving){
+      if(e.state==='chase' && nearestDist>1.2 && now-e.lastMoveAt>140){
+        e.lastMoveAt=now;
+        const dx=nearest.tileX-e.tileX, dy=nearest.tileY-e.tileY;
+        let stepX=0,stepY=0;
+        if(Math.abs(dx)>=Math.abs(dy)) stepX=dx>0?1:dx<0?-1:0; else stepY=dy>0?1:dy<0?-1:0;
+        let nx=e.tileX+stepX, ny=e.tileY+stepY;
+        if(!isWalkableInRegion(e.region,nx,ny)){
+          if(Math.abs(dx)>=Math.abs(dy)){ nx=e.tileX; ny=e.tileY+(dy>0?1:dy<0?-1:0); }
+          else { nx=e.tileX+(dx>0?1:dx<0?-1:0); ny=e.tileY; }
+        }
+        if(isWalkableInRegion(e.region,nx,ny)){
+          e.targetX=nx; e.targetY=ny; e.isMoving=true;
+          e.dir=nx!==e.tileX ? (nx>e.tileX?3:2) : (ny>e.tileY?0:1);
+        }
+      } else if(e.state==='idle' && now-e.lastMoveAt>1800 && Math.random()<0.3){
+        e.lastMoveAt=now;
+        const dirs=[[1,0,3],[-1,0,2],[0,1,0],[0,-1,1]];
+        const [ddx,ddy,dd]=dirs[Math.floor(Math.random()*4)];
+        const nx=e.tileX+ddx, ny=e.tileY+ddy;
+        if(isWalkableInRegion(e.region,nx,ny)){ e.targetX=nx; e.targetY=ny; e.isMoving=true; e.dir=dd; }
+      }
+    } else {
+      const speed=(e.state==='chase'?def.speed:0.7)*6;
+      const tpx=e.targetX*32, tpy=e.targetY*32;
+      if(e.pixelX<tpx) e.pixelX=Math.min(tpx,e.pixelX+speed); else if(e.pixelX>tpx) e.pixelX=Math.max(tpx,e.pixelX-speed);
+      if(e.pixelY<tpy) e.pixelY=Math.min(tpy,e.pixelY+speed); else if(e.pixelY>tpy) e.pixelY=Math.max(tpy,e.pixelY-speed);
+      if(e.pixelX===tpx&&e.pixelY===tpy){ e.tileX=e.targetX; e.tileY=e.targetY; e.isMoving=false; }
+      e.walkAnimFrame=(e.walkAnimFrame+1)%4;
+    }
+
+    if(e.state==='chase' && nearestDist<=1.3 && now-e.lastAttackAt>1150){
+      e.lastAttackAt=now;
+      broadcast(room,{type:'enemy_attack',targetPlayerId:nearest.id,targetName:nearest.name,damage:def.damage,enemyName:e.name});
+    }
+  }
+  broadcast(room,{type:'enemies_state',enemies:[...room.enemies.values()]});
+}
+
+function handleCombatAction(room,player,msg){
+  const action=msg.action;
+  if(action!=='fire'&&action!=='melee') return;
+  const now=Date.now();
+  const cd=action==='fire'?300:380;
+  if(player.lastCombatAt && now-player.lastCombatAt<cd) return;
+  player.lastCombatAt=now;
+  const range=action==='fire'?4:1.6;
+  let target=null,targetDist=Infinity;
+  for(const e of room.enemies.values()){
+    if(e.region!==(player.region||'timber')) continue;
+    const d=Math.hypot(e.tileX-player.tileX,e.tileY-player.tileY);
+    if(d<=range&&d<targetDist){targetDist=d;target=e;}
+  }
+  if(!target) return;
+  const isBrawler=player.characterConfig?.classId==='brawler';
+  const isTrapper=player.characterConfig?.classId==='trapper';
+  const hitChance=action==='fire'?0.82:(isBrawler?0.9:0.75);
+  if(Math.random()>hitChance) return;
+  const dmg=action==='fire'?(2+Math.floor(Math.random()*2)):(isBrawler?(2+Math.floor(Math.random()*2)):1);
+  target.hp=Math.max(0,target.hp-dmg);
+  if(target.hp<=0){
+    room.enemies.delete(target.id);
+    const def=ENEMY_TYPES[target.type];
+    if(Math.random()<def.scrapChance+(isTrapper?0.2:0)){
+      const amt=1+(isTrapper?1:0);
+      room.world.inventory.scrap=(room.world.inventory.scrap||0)+amt;
+      room.world.revision++;
+    }
+    broadcast(room,{type:'enemy_down',by:player.name,enemyName:target.name});
+    sync(room);
+  }
+}
+
 function publicPlayer(p){ const {ws,...out}=p; return out; }
 function roomPayload(room){ return {type:'room_state',roomCode:room.code,players:[...room.players.values()].map(publicPlayer)}; }
 function worldPayload(room){ return {type:'world_state',world:room.world}; }
@@ -69,7 +244,7 @@ function removePlayer(ws){
   }
   ws.roomCode=null;ws.playerId=null;
   broadcast(room,{type:'player_left',playerId:id});
-  if(room.players.size===0) rooms.delete(room.code); else sync(room);
+  if(room.players.size===0){ if(room.enemyTickTimer) clearInterval(room.enemyTickTimer); rooms.delete(room.code); } else sync(room);
 }
 function validNear(player,x,y,range=2){ return dist(player.tileX,player.tileY,x,y)<=range; }
 function advanceWorld(world,stage){ if(stage===world.questStage && world.questStage<4){ world.questStage++; } }
@@ -231,7 +406,9 @@ wss.on('connection',ws=>{
   ws.on('message',buf=>{
     let msg;try{msg=JSON.parse(buf.toString());}catch{return;}
     if(msg.type==='create_room'){
-      removePlayer(ws);const code=makeCode();const room={code,players:new Map(),world:makeWorld(),battle:null,lastEncounter:0};rooms.set(code,room);
+      removePlayer(ws);const code=makeCode();const room={code,players:new Map(),world:makeWorld(),battle:null,lastEncounter:0,enemies:new Map()};
+      room.enemyTickTimer=setInterval(()=>tickRoomEnemies(room),180);
+      rooms.set(code,room);
       const id=makeId(),p={id,name:safeName(msg.name),characterConfig:safeCharacterConfig(msg.characterConfig),color:COLORS[0],region:'timber',tileX:3,tileY:3,targetX:3,targetY:3,pixelX:96,pixelY:96,dir:0,isMoving:false,walkAnimFrame:0,stepCount:0,ws};
       room.players.set(id,p);ws.roomCode=code;ws.playerId=id;ws.send(JSON.stringify({type:'room_joined',roomCode:code,playerId:id,playerCount:1}));sync(room);return;
     }
@@ -251,6 +428,7 @@ wss.on('connection',ws=>{
     if(msg.type==='travel_region') return handleTravel(room,player,msg);
     if(msg.type==='encounter_request') return startEncounter(room,player);
     if(msg.type==='battle_action') return handleBattleAction(room,player,msg);
+    if(msg.type==='combat_action') return handleCombatAction(room,player,msg);
   });
   ws.on('close',()=>removePlayer(ws));ws.on('error',()=>removePlayer(ws));
 });

@@ -389,6 +389,13 @@
     .cc-swatch.selected { border-color: #fef08a; box-shadow: 0 0 0 1px #fef08a; }
     .cc-actions { display: flex; gap: 8px; margin-top: 4px; }
     .cc-actions .cmd-btn { flex: 1; }
+    #cc-classes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .cc-class-card {
+      background:#0a0d13; border:1px solid #242933; color:#d1d5db; text-align:left;
+      padding:7px 9px; cursor:pointer; font-family:var(--font-stack); font-size:11px;
+    }
+    .cc-class-card.selected { border-color:#f59e0b; background:#171008; color:#fef08a; }
+    .cc-class-card b { display:block; font-size:11px; letter-spacing:0.5px; }
 
     /* ================= MOBILE / TOUCH CONTROLS ================= */
     #mobile-controls { display:none; position:absolute; inset:0; z-index:18; pointer-events:none; }
@@ -431,9 +438,158 @@
       .touch-actions { transform:scale(.88); transform-origin:bottom right; }
     }
 
+    /* ============================================================
+       CHASE STUDIOS SPLASH (ported from UniMon Legends, re-themed
+       amber/red for DEADEYE instead of the arcane purple/cyan look)
+       ============================================================ */
+    #studio-intro {
+        position: fixed; inset: 0; z-index: 99999;
+        background: #050301;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        overflow: hidden; cursor: pointer;
+        transition: opacity 0.8s ease;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    #studio-intro.studio-intro-hidden { opacity: 0; pointer-events: none; }
+    #studio-intro::before {
+        content: ""; position: absolute; inset: -20%;
+        background: radial-gradient(circle at 50% 45%, rgba(217,119,6,0.28) 0%, rgba(153,27,27,0.10) 35%, rgba(5,3,1,0) 70%);
+        animation: studioVoidPulse 4.5s ease-in-out infinite;
+        pointer-events: none;
+    }
+    @keyframes studioVoidPulse {
+        0%, 100% { opacity: 0.55; transform: scale(1); }
+        50% { opacity: 0.9; transform: scale(1.08); }
+    }
+    .studio-intro-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .studio-intro-particle {
+        position: absolute; bottom: -10px; left: 0; width: 3px; height: 3px; border-radius: 50%;
+        opacity: 0; animation: studioParticleFloat linear infinite;
+    }
+    @keyframes studioParticleFloat {
+        0% { transform: translateY(0) translateX(0); opacity: 0; }
+        10% { opacity: 0.9; }
+        90% { opacity: 0.5; }
+        100% { transform: translateY(-560px) translateX(var(--drift, 0px)); opacity: 0; }
+    }
+    .studio-intro-particle:nth-child(1) { left: 10%; animation-duration: 6.5s; animation-delay: 0.2s; --drift: 14px;  background:#f59e0b; }
+    .studio-intro-particle:nth-child(2) { left: 22%; animation-duration: 7.8s; animation-delay: 1.4s; --drift: -16px; background:#dce8eb; }
+    .studio-intro-particle:nth-child(3) { left: 34%; animation-duration: 6.1s; animation-delay: 2.6s; --drift: 10px;  background:#991b1b; }
+    .studio-intro-particle:nth-child(4) { left: 46%; animation-duration: 8.4s; animation-delay: 0.7s; --drift: -8px;  background:#f59e0b; }
+    .studio-intro-particle:nth-child(5) { left: 58%; animation-duration: 6.9s; animation-delay: 3.1s; --drift: 18px;  background:#dce8eb; }
+    .studio-intro-particle:nth-child(6) { left: 68%; animation-duration: 7.2s; animation-delay: 1.9s; --drift: -14px; background:#991b1b; }
+    .studio-intro-particle:nth-child(7) { left: 78%; animation-duration: 8.9s; animation-delay: 0.4s; --drift: 20px;  background:#f59e0b; }
+    .studio-intro-particle:nth-child(8) { left: 88%; animation-duration: 6.3s; animation-delay: 2.9s; --drift: -10px; background:#dce8eb; }
+
+    .studio-intro-logo-wrap { position: relative; width: 150px; height: 150px; }
+    .studio-intro-glow {
+        position: absolute; inset: -30px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(245,158,11,0.55) 0%, rgba(153,27,27,0.35) 45%, rgba(153,27,27,0) 75%);
+        filter: blur(18px);
+        opacity: 0; transform: scale(0.7);
+        animation: studioGlowPulse 2.4s ease-in-out 1.5s infinite;
+        pointer-events: none;
+    }
+    @keyframes studioGlowPulse {
+        0%, 100% { opacity: 0.35; transform: scale(0.85); }
+        50%      { opacity: 0.75; transform: scale(1.05); }
+    }
+    .studio-intro-logo {
+        position: relative; width: 150px; height: 150px;
+        opacity: 0; transform: scale(0.4) rotate(-6deg);
+        animation: studioLogoScaleIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+        filter: drop-shadow(0 0 14px rgba(245,158,11,0.4));
+    }
+    .studio-intro-logo svg { display: block; width: 100%; height: 100%; }
+    @keyframes studioLogoScaleIn {
+        0% { opacity: 0; transform: scale(0.4) rotate(-6deg); }
+        60% { opacity: 1; transform: scale(1.08) rotate(1deg); }
+        100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+    .studio-intro-title {
+        margin-top: 26px; font-weight: bold;
+        font-size: 32px; letter-spacing: 10px; color: #f5f0e8; text-align: center;
+        text-shadow: 0 0 12px rgba(245,158,11,0.55), 0 0 26px rgba(153,27,27,0.45);
+        opacity: 0; transform: translateY(10px);
+        animation: studioTextReveal 0.9s ease 1.5s forwards;
+    }
+    .studio-intro-motto {
+        margin-top: 10px;
+        font-size: 12px; letter-spacing: 4px; color: #d97706; text-align: center;
+        opacity: 0; transform: translateY(8px);
+        animation: studioTextReveal 0.9s ease 2.1s forwards;
+    }
+    @keyframes studioTextReveal { to { opacity: 1; transform: translateY(0); } }
+    .studio-intro-skip-hint {
+        position: absolute; bottom: 26px;
+        font-size: 10px; letter-spacing: 1.5px; color: #5c4326;
+        opacity: 0; animation: studioTextReveal 0.9s ease 2.8s forwards;
+    }
+
   </style>
 </head>
 <body>
+
+  <div id="studio-intro" role="presentation" aria-label="Chase Studios">
+    <div class="studio-intro-particles">
+      <div class="studio-intro-particle"></div>
+      <div class="studio-intro-particle"></div>
+      <div class="studio-intro-particle"></div>
+      <div class="studio-intro-particle"></div>
+      <div class="studio-intro-particle"></div>
+      <div class="studio-intro-particle"></div>
+      <div class="studio-intro-particle"></div>
+      <div class="studio-intro-particle"></div>
+    </div>
+    <div class="studio-intro-logo-wrap">
+      <div class="studio-intro-glow"></div>
+      <div class="studio-intro-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="150" height="150">
+          <defs>
+            <radialGradient id="voidBg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#171026"/>
+              <stop offset="100%" stop-color="#07050d"/>
+            </radialGradient>
+            <linearGradient id="obsidianBlade" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#334155"/>
+              <stop offset="50%" stop-color="#e2e8f0"/>
+              <stop offset="100%" stop-color="#1e293b"/>
+            </linearGradient>
+            <linearGradient id="purpleTrim" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#c084fc"/>
+              <stop offset="50%" stop-color="#9333ea"/>
+              <stop offset="100%" stop-color="#581c87"/>
+            </linearGradient>
+            <linearGradient id="voidMana" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#22d3ee"/>
+              <stop offset="50%" stop-color="#818cf8"/>
+              <stop offset="100%" stop-color="#c084fc"/>
+            </linearGradient>
+            <filter id="shadowA" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.9"/>
+            </filter>
+          </defs>
+          <rect width="500" height="500" rx="44" fill="url(#voidBg)" stroke="#2e1065" stroke-width="4"/>
+          <g filter="url(#shadowA)" transform="translate(0, -10)">
+            <polygon points="250,75 390,145 355,325 250,390 145,325 110,145" fill="#0b0714" stroke="#3b0764" stroke-width="5" stroke-linejoin="round"/>
+            <path d="M 335 165 L 220 165 C 160 165 135 195 135 250 C 135 305 160 335 220 335 L 335 335" fill="none" stroke="url(#voidMana)" stroke-width="26" stroke-linecap="square"/>
+            <circle cx="250" cy="80" r="14" fill="url(#purpleTrim)" stroke="#07050d" stroke-width="3"/>
+            <polygon points="250,60 258,74 242,74" fill="url(#purpleTrim)"/>
+            <rect x="243" y="94" width="14" height="34" rx="2" fill="#1e1b4b" stroke="#07050d" stroke-width="2"/>
+            <polygon points="180,135 250,148 320,135 305,160 250,155 195,160" fill="url(#purpleTrim)" stroke="#07050d" stroke-width="3" stroke-linejoin="round"/>
+            <polygon points="250,140 258,148 250,156 242,148" fill="#22d3ee" stroke="#07050d" stroke-width="1.5"/>
+            <polygon points="238,160 262,160 259,360 250,395 241,360" fill="url(#obsidianBlade)" stroke="#07050d" stroke-width="3" stroke-linejoin="round"/>
+            <line x1="250" y1="168" x2="250" y2="350" stroke="#22d3ee" stroke-width="3"/>
+            <polygon points="160,200 166,212 178,214 169,223 172,235 160,228 148,235 151,223 142,214 154,212" fill="#22d3ee"/>
+            <polygon points="340,285 345,295 355,297 347,305 350,315 340,310 330,315 333,305 325,297 335,295" fill="#c084fc"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="studio-intro-title">CHASE STUDIOS</div>
+    <div class="studio-intro-motto">EVERY GENRE. NO LIMITS.</div>
+    <div class="studio-intro-skip-hint">Click or press any key to skip</div>
+  </div>
 
   <div id="game-container">
     <header id="hud-top">
@@ -514,6 +670,11 @@
               <div class="cc-group-label">Hair</div>
               <div class="cc-swatches" data-field="hair"></div>
             </div>
+            <div class="cc-group">
+              <div class="cc-group-label">Survivor Class</div>
+              <div id="cc-classes"></div>
+              <div id="cc-class-tagline" style="font-size:10px;color:#f59e0b;margin-top:5px;"></div>
+            </div>
             <div class="cc-actions">
               <button class="cmd-btn" id="cc-random">RANDOM</button>
               <button class="cmd-btn" id="cc-done" style="border-color:#22c55e;">DONE</button>
@@ -571,6 +732,9 @@
           <div class="touch-actions">
             <button class="touch-btn touch-small" data-key="shift">RUN</button>
             <button class="touch-btn touch-small" data-action="interact">USE</button>
+            <button class="touch-btn touch-small" data-action="fire">FIRE</button>
+            <button class="touch-btn touch-small" data-action="melee">BASH</button>
+            <button class="touch-btn touch-small" data-action="reload">R</button>
             <button class="touch-btn touch-small" data-action="pause">II</button>
             <button class="touch-btn touch-small" data-action="map">MAP</button>
           </div>
@@ -634,6 +798,7 @@
         <div id="log-feed">
           <p>Intro storyboard complete. Welcome to Deadeye.</p>
           <p class="warning">Use Arrow keys or WASD to navigate the whiteout.</p>
+          <p class="warning">[F] Fire  [V] Bash  [R] Reload  [E] Use/Loot  [G] Truck</p>
         </div>
       </div>
 
@@ -662,6 +827,89 @@
   </div>
 
   <script>
+    // ============================================================
+    // CHASE STUDIOS SPLASH (ported from UniMon Legends)
+    // Self-contained: only touches its own DOM/audio, runs before the
+    // rest of the game finishes wiring up, and simply removes itself
+    // when done -- the title screen underneath is already live.
+    // ============================================================
+    (function () {
+      let studioAudioCtx = null;
+      function getStudioAudioCtx() {
+        try {
+          if (!studioAudioCtx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) studioAudioCtx = new AC();
+          }
+          return studioAudioCtx;
+        } catch (e) { return null; }
+      }
+      function playStudioChime() {
+        const ctx = getStudioAudioCtx();
+        if (!ctx) return;
+        const fire = () => {
+          try {
+            const now = ctx.currentTime;
+            const master = ctx.createGain();
+            master.gain.value = 0.22;
+            master.connect(ctx.destination);
+            // Soft western shimmer: low fifth, bright overtone -- a saloon-bell chime
+            // rather than the arcane version's cyan/amethyst shimmer.
+            const notes = [
+              { freq: 493.88, delay: 0.00, peak: 0.18 },
+              { freq: 739.99, delay: 0.06, peak: 0.13 },
+              { freq: 987.77, delay: 0.14, peak: 0.08 }
+            ];
+            notes.forEach(n => {
+              const osc = ctx.createOscillator();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(n.freq, now + n.delay);
+              const g = ctx.createGain();
+              g.gain.setValueAtTime(0.0001, now + n.delay);
+              g.gain.linearRampToValueAtTime(n.peak, now + n.delay + 0.08);
+              g.gain.exponentialRampToValueAtTime(0.0001, now + n.delay + 1.6);
+              osc.connect(g).connect(master);
+              osc.start(now + n.delay);
+              osc.stop(now + n.delay + 1.7);
+            });
+          } catch (e) {}
+        };
+        if (ctx.state === 'suspended') { ctx.resume().then(fire).catch(() => {}); }
+        else { fire(); }
+      }
+
+      let studioIntroResolved = false;
+      let studioIntroTimers = [];
+      function clearStudioIntroTimers() { studioIntroTimers.forEach(t => clearTimeout(t)); studioIntroTimers = []; }
+      // Stop this keypress from also reaching the title screen's own key
+      // handler underneath (both listen on the same bubble path) -- without
+      // this, the key used to skip the splash doubles as "NEW GAME" on the
+      // screen behind it.
+      function studioIntroKeyHandler(e) { e.preventDefault(); e.stopPropagation(); finishStudioIntro(); }
+      function finishStudioIntro() {
+        if (studioIntroResolved) return;
+        studioIntroResolved = true;
+        clearStudioIntroTimers();
+        const el = document.getElementById('studio-intro');
+        if (el) {
+          el.removeEventListener('click', finishStudioIntro);
+          document.removeEventListener('keydown', studioIntroKeyHandler);
+          el.classList.add('studio-intro-hidden');
+          setTimeout(() => { el.remove(); }, 850);
+        }
+      }
+      function initStudioIntro() {
+        const el = document.getElementById('studio-intro');
+        if (!el) return;
+        el.addEventListener('click', finishStudioIntro);
+        document.addEventListener('keydown', studioIntroKeyHandler);
+        studioIntroTimers.push(setTimeout(playStudioChime, 550));
+        studioIntroTimers.push(setTimeout(finishStudioIntro, 4600));
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initStudioIntro);
+      else initStudioIntro();
+    })();
+
     const canvas = document.getElementById('overworld-canvas');
     const ctx = canvas.getContext('2d');
     const battleCanvas = document.getElementById('battle-canvas');
@@ -687,7 +935,7 @@
     const multiplayer = {
       ws: null, roomCode: '', playerId: '', connected: false,
       joined: false, players: new Map(), name: '', reconnectTimer: null,
-      lastSent: 0, world: null, worldRevision: -1, selfStarted: false
+      lastSent: 0, world: null, worldRevision: -1, selfStarted: false, enemies: [], lastCombatSent: 0
     };
 
     const netIndicator = document.getElementById('net-indicator');
@@ -730,6 +978,7 @@
           if(!gameStarted && !multiplayer.selfStarted) {
             titleScreen.style.display='none'; storyboardOverlay.style.display='none';
             gameStarted=true; paused=false; startMusic();
+            applyClassToPlayer(player, characterConfig.classId); updateUI();
             addLog(`${msg.by||'A marshal'} started the expedition. You're in!`, 'success');
             if(typeof showToast==='function') showToast('EXPEDITION UNDERWAY', `${msg.by||'A marshal'} stepped into the blizzard. You're with them.`);
             resize();
@@ -744,6 +993,19 @@
         } else if(msg.type==='phase3_notice') {
           if (typeof addLog==='function') addLog(msg.message||'Expedition update.', msg.kind||'success');
           if (typeof showToast==='function') showToast(msg.title||'EXPEDITION', msg.message||'');
+        } else if(msg.type==='enemies_state') {
+          multiplayer.enemies = msg.enemies || [];
+        } else if(msg.type==='enemy_attack') {
+          if (msg.targetPlayerId === multiplayer.playerId) {
+            player.hp = Math.max(0, player.hp - (msg.damage||0));
+            addLog(`${msg.enemyName||'Something'} claws at you! -${msg.damage||0} HP`, 'danger');
+            updateUI();
+            if (player.hp <= 0 && !rpg.gameOverShown) { rpg.gameOverShown = true; setTimeout(showGameOver, 300); }
+          } else {
+            addLog(`${msg.enemyName||'Something'} attacks ${msg.targetName||'a marshal'}.`, 'danger');
+          }
+        } else if(msg.type==='enemy_down') {
+          addLog(`${msg.by||'A marshal'} put down a ${msg.enemyName||'threat'}.`, 'success');
         }
       };
       ws.onclose=()=>{ multiplayer.connected=false; multiplayer.players.clear(); if(multiplayer.joined) setNetStatus('CO-OP: DISCONNECTED'); else setNetStatus('CO-OP: OFFLINE'); };
@@ -764,13 +1026,46 @@
       multiplayer.ws.send(JSON.stringify({type:'world_action',action,...extra}));
       return true;
     }
+    // Co-op open-world combat: enemies are server-owned in multiplayer, so
+    // fire/melee just requests the swing -- the server picks the nearest
+    // valid target in range, applies damage, and the next enemies_state
+    // broadcast reflects the result. A short client-side cooldown keeps
+    // one key-mash from flooding the socket.
+    function multiplayerCombatAction(action) {
+      if(!multiplayer.connected || !multiplayer.ws || multiplayer.ws.readyState!==WebSocket.OPEN) return;
+      const now=performance.now();
+      const cd = action==='fire' ? 340 : 420;
+      if(now - multiplayer.lastCombatSent < cd) return;
+      if(action==='fire' && player.ammo<=0){ addLog('*CLICK* Empty chamber -- reload!','warning'); return; }
+      multiplayer.lastCombatSent = now;
+      if(action==='fire'){ player.ammo--; updateUI(); }
+      multiplayer.ws.send(JSON.stringify({type:'combat_action',action}));
+    }
+    function drawMultiplayerEnemies(cameraX, cameraY) {
+      (multiplayer.enemies||[]).forEach(e => {
+        if (e.region && e.region !== (multiplayer.world?.region||'timber')) return;
+        const sprite = (e.hitTimer>0) ? shamblerSprites.hit : shamblerSprites.normal;
+        const img = sprite[e.isMoving ? (e.walkAnimFrame||0) : 0];
+        const footX = cameraX + (e.pixelX + TILE_SIZE/2) * WORLD_SCALE;
+        const footY = cameraY + (e.pixelY + TILE_SIZE) * WORLD_SCALE;
+        const x = Math.round(footX - RICK_DRAW_W/2), y = Math.round(footY - RICK_DRAW_H + 2);
+        ctx.imageSmoothingEnabled = false;
+        if (img && img.complete) ctx.drawImage(img, x, y, RICK_DRAW_W, RICK_DRAW_H);
+        if (e.hp < e.maxHp || e.state === 'chase') {
+          const bw = 26;
+          ctx.fillStyle = '#07111e'; ctx.fillRect(x+2, y-8, bw, 4);
+          ctx.fillStyle = e.hp/e.maxHp > 0.4 ? '#ef4444' : '#7f1d1d';
+          ctx.fillRect(x+2, y-8, Math.max(0, bw*(e.hp/e.maxHp)), 4);
+        }
+      });
+    }
     function handleWorldEvent(msg) {
       if(msg.event==='discover') addLog(`${msg.by||'A marshal'} discovered ${String(msg.id||'').toUpperCase().replace(/-/g,' ')}.`, 'success');
       if(msg.event==='loot') addLog(`${msg.by||'A marshal'} scavenged shared expedition supplies.`, 'success');
       if(msg.event==='gate_opened'){ for(let x=29;x<=34;x++) setTile(x,26,0); showToast('WAYSTATION STOCKADE OPENED','The expedition forced the southern road open.'); addLog(`${msg.by||'A marshal'} opened the WAYSTATION STOCKADE. The road south is clear!`, 'success'); }
       if(msg.event==='item_used') {
         if(msg.byId===multiplayer.playerId) {
-          if(msg.item==='medkits') player.hp=Math.min(100,player.hp+40);
+          if(msg.item==='medkits') player.hp=Math.min(player.maxHp||100,player.hp+healAmount(40));
           if(msg.item==='rations') player.temp=Math.min(100,player.temp+25);
           if(msg.item==='matches') player.torch=100;
           updateUI();
@@ -854,7 +1149,10 @@
       pauseOverlay.style.display = 'none';
       gameStarted = true;
       paused = false;
-      addLog("Marshal Rick Vance steps into the blizzard. Act I begins.", "success");
+      applyClassToPlayer(player, characterConfig.classId);
+      updateUI();
+      const cls = CLASS_DEFS[characterConfig.classId] || CLASS_DEFS[DEFAULT_CLASS_ID];
+      addLog(`${characterConfig.name || 'Marshal Rick Vance'} the ${cls.name} steps into the blizzard. Act I begins.`, "success");
       resize();
     }
 
@@ -1113,8 +1411,33 @@
     // Local marshal's customizable appearance. Shaped so it can be dropped
     // straight into the multiplayer handshake payload (name + 4 palette hex
     // values) sent with create_room / join_room.
+    // Survivor classes -- picked alongside the palette, these give every
+    // marshal a distinct playstyle (not just a different coat color) so a
+    // posse can genuinely divide up roles instead of everyone being an
+    // identical Rick Vance. Stat deltas are applied once, when a fresh run
+    // starts (startTheGame / loadRPGGame's "new" path), not retroactively.
+    const CLASS_DEFS = {
+      marshal: { id:'marshal', name:'Marshal', tagline:'Balanced lawman. No weaknesses, no edge.',
+        hp:0, walkSpeed:0, runSpeed:0, ammo:0, reserveAmmo:5, torches:0, bandages:0, medkits:0,
+        perk:'None -- the reliable all-rounder.' },
+      scout: { id:'scout', name:'Scout', tagline:'Fast and light. Runs down the frozen trail quicker than anyone.',
+        hp:-15, walkSpeed:1, runSpeed:1, ammo:-2, reserveAmmo:-5, torches:1, bandages:0, medkits:0,
+        perk:'+1 move speed, extra torches, thinner health.' },
+      brawler: { id:'brawler', name:'Brawler', tagline:'Built like a barn door. Prefers a rifle butt to a bullet.',
+        hp:35, walkSpeed:0, runSpeed:-1, ammo:-3, reserveAmmo:-8, torches:0, bandages:0, medkits:0,
+        perk:'+35 max HP, hits harder in melee, slower on the run.' },
+      medic: { id:'medic', name:'Medic', tagline:'Carries more than a marshal ever should, and knows how to use it.',
+        hp:-5, walkSpeed:0, runSpeed:0, ammo:-1, reserveAmmo:-5, torches:0, bandages:2, medkits:1,
+        perk:'Bandages and medkits heal for more.' },
+      trapper: { id:'trapper', name:'Trapper', tagline:'Knows where the frontier hides its scrap.',
+        hp:-5, walkSpeed:0, runSpeed:0, ammo:0, reserveAmmo:0, torches:2, bandages:0, medkits:0,
+        perk:'Finds extra scrap when scavenging, extra torches.' }
+    };
+    const DEFAULT_CLASS_ID = 'marshal';
+
     const characterConfig = {
       name: 'Rick Vance',
+      classId: DEFAULT_CLASS_ID,
       coatMain: DEFAULT_PALETTE.coatMain,
       hatMain: DEFAULT_PALETTE.hatMain,
       skin: DEFAULT_PALETTE.skin,
@@ -1207,10 +1530,25 @@
       img.onload = () => { ccPreviewCtx.imageSmoothingEnabled = false; ccPreviewCtx.clearRect(0,0,32,40); ccPreviewCtx.drawImage(img, 0, 0, 32, 40); };
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildRickSVG(DIR.DOWN, 0, ccDraft));
     }
+    function ccRenderClasses() {
+      const wrap = document.getElementById('cc-classes');
+      const tagline = document.getElementById('cc-class-tagline');
+      wrap.innerHTML = '';
+      Object.values(CLASS_DEFS).forEach(cls => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'cc-class-card' + (ccDraft.classId === cls.id ? ' selected' : '');
+        card.innerHTML = `<b>${cls.name}</b>${cls.perk}`;
+        card.onclick = () => { ccDraft.classId = cls.id; ccRenderClasses(); };
+        wrap.appendChild(card);
+      });
+      const active = CLASS_DEFS[ccDraft.classId] || CLASS_DEFS[DEFAULT_CLASS_ID];
+      tagline.textContent = active.tagline;
+    }
     document.getElementById('btn-customize').onclick = () => {
       ccDraft = { ...characterConfig };
       ccNameInput.value = characterConfig.name || '';
-      ccRenderSwatches(); ccRenderPreview();
+      ccRenderSwatches(); ccRenderPreview(); ccRenderClasses();
       ccOverlay.classList.add('active');
     };
     document.getElementById('cc-random').onclick = () => {
@@ -1218,7 +1556,9 @@
         const opts = CC_SWATCHES[field];
         ccDraft[field] = opts[Math.floor(Math.random() * opts.length)];
       });
-      ccRenderSwatches(); ccRenderPreview();
+      const classIds = Object.keys(CLASS_DEFS);
+      ccDraft.classId = classIds[Math.floor(Math.random() * classIds.length)];
+      ccRenderSwatches(); ccRenderPreview(); ccRenderClasses();
     };
     document.getElementById('cc-done').onclick = () => {
       Object.assign(characterConfig, ccDraft);
@@ -1226,8 +1566,32 @@
       saveCharacterConfig();
       rebuildLocalSprites();
       ccOverlay.classList.remove('active');
-      addLog(`${characterConfig.name}'s outfit is set.`, 'success');
+      const cls = CLASS_DEFS[characterConfig.classId] || CLASS_DEFS[DEFAULT_CLASS_ID];
+      addLog(`${characterConfig.name} the ${cls.name} is ready to ride out.`, 'success');
     };
+
+    // Applies the chosen class's stat deltas to a freshly-initialized player
+    // object. Called once at the start of a new run (never on a loaded save,
+    // so switching classes doesn't retroactively buff/nerf an in-progress
+    // marshal). Safe to call with any partially-built player object.
+    function applyClassToPlayer(p, classId) {
+      const cls = CLASS_DEFS[classId] || CLASS_DEFS[DEFAULT_CLASS_ID];
+      p.classId = cls.id;
+      p.maxHp = 100 + cls.hp;
+      p.hp = p.maxHp;
+      p.walkSpeed = Math.max(1, 2 + cls.walkSpeed);
+      p.runSpeed = Math.max(2, 4 + cls.runSpeed);
+      p.ammo = Math.max(1, 5 + cls.ammo);
+      p.maxClip = p.ammo;
+      p.reserveAmmo = Math.max(0, 15 + cls.reserveAmmo);
+      p.torches = Math.max(0, 2 + cls.torches);
+      p.bandages = Math.max(0, 1 + cls.bandages);
+      return p;
+    }
+    // Medic class perk: bandages/medkits heal for 50% more.
+    function healAmount(base) { return player.classId === 'medic' ? Math.round(base * 1.5) : base; }
+    // Trapper class perk: scavenging finds extra scrap.
+    function trapperScrapBonus() { return player.classId === 'trapper' ? 1 : 0; }
 
     function drawRickSprite(cameraX, cameraY) {
       if (!rickSprites.ready) return;
@@ -1290,6 +1654,8 @@
       animTimer: 0,
       
       hp: 100,
+      maxHp: 100,
+      classId: DEFAULT_CLASS_ID,
       temp: 85,
       torch: 100,
       ammo: 5,
@@ -1308,6 +1674,243 @@
       { name:'Frozen Outlaw', maxHp:10, damage:16, hit:0.68 }
     ];
     const battleEnemy = { name:'Frost Shambler', hp:6, maxHp:6, damage:10, hit:0.78, hitTimer:0, seed:0 };
+
+    // ============================================================
+    // OPEN-WORLD COMBAT (State of Decay-style)
+    // Enemies are real entities that roam, wander into view, and can be
+    // seen, avoided, or engaged directly on the overworld map -- no scene
+    // transition, no turn order. Movement never pauses. This replaces the
+    // old "random chance of a modal battle screen" system; that system's
+    // code is left in place (co-op turn-based fallback) but is no longer
+    // triggered by normal play.
+    // ============================================================
+    // speed is px advanced per ~110ms AI tick (see updateEnemies) -- calibrated against the
+    // player's own px-per-frame walk speed (2px @ ~16ms frame = ~120px/sec) so these read as a
+    // real pace, not a crawl: shambler is outwalkable, walker keeps pace with a walking marshal,
+    // outlaw is faster than a walk and forces a decision to run or fight.
+    const ENEMY_TYPES = {
+      shambler: { name:'Frost Shambler', hp:18, damage:7,  aggro:4.5, speed:9,  scrapChance:.55 },
+      walker:   { name:'Rime Walker',    hp:26, damage:10, aggro:5.5, speed:12, scrapChance:.65 },
+      outlaw:   { name:'Frozen Outlaw',  hp:34, damage:13, aggro:6,   speed:18, scrapChance:.8 }
+    };
+    let enemies = [];
+    let nextEnemyId = 1;
+    const MAX_OPEN_WORLD_ENEMIES = 5;
+    let lastEnemyTick = 0;
+    let lastEnemySpawnCheck = 0;
+
+    function buildShamblerSVG(frame, hitFlash) {
+      const bob = (frame === 1 || frame === 3) ? -1 : 0;
+      const lurch = frame % 2 === 0 ? 0 : 1;
+      const body = hitFlash ? '#e5e7eb' : '#5b6b64';
+      const dark = hitFlash ? '#cbd5e1' : '#37423d';
+      const rot = hitFlash ? '#f1f5f9' : '#8a3a2e';
+      let p = '';
+      const add = (x,y,w,h,c) => p += `<rect x="${x}" y="${y+bob}" width="${w}" height="${h}" fill="${c}"/>`;
+      p += `<ellipse cx="16" cy="37" rx="8" ry="2.2" fill="#0a0d10" opacity=".4"/>`;
+      // Hunched, uneven legs -- lurching gait, off-balance silhouette vs. Rick's upright one.
+      add(9 + lurch, 27, 5, 9, dark);
+      add(17 - lurch, 29, 5, 7, dark);
+      // Torn torso, hunched forward
+      add(9, 15, 15, 13, body);
+      add(11, 16, 4, 5, rot);
+      add(19, 20, 3, 4, rot);
+      // One arm hanging low, one raised
+      add(6, 18, 3, 12, dark);
+      add(23, 14, 3, 9, dark);
+      // Hunched head, low and forward
+      add(11, 8, 10, 8, '#77827c');
+      add(13, 11, 1, 1, '#0a0d10');
+      add(18, 11, 1, 1, '#0a0d10');
+      add(12, 15, 8, 1, '#232b27');
+      // Frost/ice patches
+      add(9, 9, 2, 2, '#dce8eb');
+      add(19, 24, 2, 2, '#dce8eb');
+      add(7, 29, 2, 1, '#dce8eb');
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40" shape-rendering="crispEdges">${p}</svg>`;
+    }
+    const shamblerSprites = { normal: [], hit: [] };
+    for (let f = 0; f < 4; f++) {
+      const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildShamblerSVG(f, false));
+      shamblerSprites.normal[f] = img;
+      const hImg = new Image(); hImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildShamblerSVG(f, true));
+      shamblerSprites.hit[f] = hImg;
+    }
+
+    function spawnEnemyNear(cx, cy, typeId) {
+      typeId = typeId || (Math.random() < 0.15 ? 'outlaw' : Math.random() < 0.4 ? 'walker' : 'shambler');
+      const def = ENEMY_TYPES[typeId];
+      for (let tries = 0; tries < 12; tries++) {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 5 + Math.random() * 4;
+        const tx = Math.round(cx + Math.cos(ang) * dist);
+        const ty = Math.round(cy + Math.sin(ang) * dist);
+        if (!isWalkable(tx, ty)) continue;
+        enemies.push({
+          id: nextEnemyId++, type: typeId, name: def.name,
+          tileX: tx, tileY: ty, targetX: tx, targetY: ty, pixelX: tx*TILE_SIZE, pixelY: ty*TILE_SIZE,
+          dir: DIR.DOWN, isMoving: false, walkAnimFrame: 0, animTimer: 0,
+          hp: def.hp, maxHp: def.hp, state: 'idle', hitTimer: 0, lastAttackAt: 0, lastMoveAt: 0
+        });
+        return true;
+      }
+      return false;
+    }
+
+    function maybeSpawnOpenWorldEnemy() {
+      if (multiplayer.joined) return; // multiplayer enemies are server-owned
+      if (enemies.length >= MAX_OPEN_WORLD_ENEMIES) return;
+      const currentTile = map[player.tileY * MAP_COLS + player.tileX];
+      const chance = currentTile === 2 ? 0.22 : 0.03;
+      if (Math.random() < chance) spawnEnemyNear(player.tileX, player.tileY, null);
+    }
+
+    function updateEnemies(now) {
+      if (multiplayer.joined) return; // rendered from server state instead
+      if (!gameStarted || paused) return;
+      if (now - lastEnemyTick < 110) return;
+      const dt = now - lastEnemyTick;
+      lastEnemyTick = now;
+      enemies.forEach(e => {
+        if (e.hitTimer > 0) e.hitTimer -= dt;
+        const def = ENEMY_TYPES[e.type];
+        const distToPlayer = Math.hypot(e.tileX - player.tileX, e.tileY - player.tileY);
+        if (e.state === 'idle' && distToPlayer <= def.aggro) { e.state = 'chase'; addLog(`A ${e.name} spots you in the whiteout!`, 'danger'); }
+        else if (e.state === 'chase' && distToPlayer > def.aggro + 3) { e.state = 'idle'; }
+
+        if (!e.isMoving) {
+          if (e.state === 'chase' && distToPlayer > 1.2) {
+            const dx = player.tileX - e.tileX, dy = player.tileY - e.tileY;
+            let stepX = 0, stepY = 0;
+            if (Math.abs(dx) >= Math.abs(dy)) stepX = dx > 0 ? 1 : dx < 0 ? -1 : 0;
+            else stepY = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+            if (stepX === 0 && stepY === 0) { stepX = dx > 0 ? 1 : dx < 0 ? -1 : 0; }
+            let nx = e.tileX + stepX, ny = e.tileY + stepY;
+            if (!isWalkable(nx, ny)) {
+              // Try the other axis if the primary is blocked.
+              nx = e.tileX + (dy > 0 ? 0 : 0); ny = e.tileY;
+              if (Math.abs(dx) >= Math.abs(dy)) { nx = e.tileX; ny = e.tileY + (dy > 0 ? 1 : dy < 0 ? -1 : 0); }
+              else { nx = e.tileX + (dx > 0 ? 1 : dx < 0 ? -1 : 0); ny = e.tileY; }
+            }
+            if (isWalkable(nx, ny)) {
+              e.targetX = nx; e.targetY = ny; e.isMoving = true;
+              e.dir = Math.abs(nx-e.tileX) > 0 ? (nx > e.tileX ? DIR.RIGHT : DIR.LEFT) : (ny > e.tileY ? DIR.DOWN : DIR.UP);
+            }
+          } else if (e.state === 'idle' && Math.random() < 0.01) {
+            const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+            const [ddx,ddy] = dirs[Math.floor(Math.random()*4)];
+            const nx = e.tileX+ddx, ny = e.tileY+ddy;
+            if (isWalkable(nx, ny)) { e.targetX=nx; e.targetY=ny; e.isMoving=true; e.dir = ddx>0?DIR.RIGHT:ddx<0?DIR.LEFT:ddy>0?DIR.DOWN:DIR.UP; }
+          }
+        } else {
+          const speed = (e.state==='chase'?def.speed:0.7);
+          const tpx = e.targetX*TILE_SIZE, tpy = e.targetY*TILE_SIZE;
+          e.animTimer += speed;
+          if (e.animTimer >= 8) { e.walkAnimFrame = (e.walkAnimFrame+1)%4; e.animTimer = 0; }
+          if (e.pixelX < tpx) e.pixelX = Math.min(tpx, e.pixelX+speed);
+          else if (e.pixelX > tpx) e.pixelX = Math.max(tpx, e.pixelX-speed);
+          if (e.pixelY < tpy) e.pixelY = Math.min(tpy, e.pixelY+speed);
+          else if (e.pixelY > tpy) e.pixelY = Math.max(tpy, e.pixelY-speed);
+          if (e.pixelX===tpx && e.pixelY===tpy) { e.tileX=e.targetX; e.tileY=e.targetY; e.isMoving=false; e.walkAnimFrame=0; }
+        }
+
+        if (e.state === 'chase' && distToPlayer <= 1.3 && now - e.lastAttackAt > 1150) {
+          e.lastAttackAt = now;
+          player.hp = Math.max(0, player.hp - def.damage);
+          addLog(`${e.name} claws at you! -${def.damage} HP`, 'danger');
+          updateUI();
+          if (player.hp <= 0 && typeof rpg !== 'undefined' && !rpg.gameOverShown) { rpg.gameOverShown = true; setTimeout(showGameOver, 300); }
+        }
+      });
+      enemies = enemies.filter(e => e.hp > 0);
+    }
+
+    function nearestEnemy(maxRange) {
+      let best = null, bestDist = Infinity;
+      enemies.forEach(e => {
+        const d = Math.hypot(e.tileX - player.tileX, e.tileY - player.tileY);
+        if (d <= maxRange && d < bestDist) { best = e; bestDist = d; }
+      });
+      return best;
+    }
+
+    function killEnemyLocal(e) {
+      enemies = enemies.filter(x => x.id !== e.id);
+      addLog(`${e.name} falls into the snow.`, 'success');
+      const def = ENEMY_TYPES[e.type];
+      if (Math.random() < def.scrapChance + trapperScrapBonus() * 0.2) {
+        const amt = 1 + trapperScrapBonus();
+        if (typeof rpg !== 'undefined') { addInv('scrap', amt); }
+        addLog(`Looted +${amt} iron scrap from the frozen dead.`, 'success');
+      }
+    }
+
+    function combatFire() {
+      if (!gameStarted || paused) return;
+      if (multiplayer.joined) { multiplayerCombatAction('fire'); return; }
+      const target = nearestEnemy(3.5);
+      if (!target) { return; }
+      if (player.ammo <= 0) { addLog('*CLICK* Empty chamber -- reload!', 'warning'); return; }
+      const now = performance.now();
+      if (now - (combatFire._last||0) < 340) return;
+      combatFire._last = now;
+      player.ammo--; updateUI();
+      if (Math.random() < 0.82) {
+        const dmg = 2 + Math.floor(Math.random()*2);
+        target.hp = Math.max(0, target.hp - dmg); target.hitTimer = 160;
+        addLog(`.44 round hits the ${target.name} -- ${dmg} damage!`, 'warning');
+        if (target.hp <= 0) killEnemyLocal(target);
+      } else {
+        addLog('Shot lost in the blizzard.', '');
+      }
+    }
+    function combatMelee() {
+      if (!gameStarted || paused) return;
+      if (multiplayer.joined) { multiplayerCombatAction('melee'); return; }
+      const target = nearestEnemy(1.5);
+      if (!target) return;
+      const now = performance.now();
+      if (now - (combatMelee._last||0) < 420) return;
+      combatMelee._last = now;
+      const brawler = player.classId === 'brawler';
+      if (Math.random() < (brawler ? 0.9 : 0.75)) {
+        const dmg = brawler ? 2 + Math.floor(Math.random()*2) : 1;
+        target.hp = Math.max(0, target.hp - dmg); target.hitTimer = 160;
+        addLog(`Rifle butt cracks the ${target.name} -- ${dmg} damage!`, 'warning');
+        if (target.hp <= 0) killEnemyLocal(target);
+      } else {
+        addLog(`The ${target.name} shrugs off the shove.`, '');
+      }
+    }
+
+    function combatReload() {
+      if (!gameStarted || paused) return;
+      if (player.ammo >= player.maxClip) { addLog('Chamber is already full.', ''); return; }
+      if (player.reserveAmmo <= 0) { addLog('No reserve cartridges left. Scavenge more.', 'warning'); return; }
+      const load = Math.min(player.maxClip - player.ammo, player.reserveAmmo);
+      player.ammo += load; player.reserveAmmo -= load;
+      addLog(`Chambered ${load} round${load === 1 ? '' : 's'}. .44 ${player.ammo}/${player.maxClip}.`, 'success');
+      updateUI();
+    }
+
+    function drawEnemies(cameraX, cameraY) {
+      enemies.forEach(e => {
+        const sprite = e.hitTimer > 0 ? shamblerSprites.hit : shamblerSprites.normal;
+        const img = sprite[e.isMoving ? e.walkAnimFrame : 0];
+        const footX = cameraX + (e.pixelX + TILE_SIZE/2) * WORLD_SCALE;
+        const footY = cameraY + (e.pixelY + TILE_SIZE) * WORLD_SCALE;
+        const x = Math.round(footX - RICK_DRAW_W/2), y = Math.round(footY - RICK_DRAW_H + 2);
+        ctx.imageSmoothingEnabled = false;
+        if (img && img.complete) ctx.drawImage(img, x, y, RICK_DRAW_W, RICK_DRAW_H);
+        // Floating HP bar, only once engaged (state chase) so idle wanderers don't clutter the view.
+        if (e.state === 'chase' || e.hp < e.maxHp) {
+          const bw = 26;
+          ctx.fillStyle = '#07111e'; ctx.fillRect(x+2, y-8, bw, 4);
+          ctx.fillStyle = e.hp/e.maxHp > 0.4 ? '#ef4444' : '#7f1d1d';
+          ctx.fillRect(x+2, y-8, Math.max(0, bw*(e.hp/e.maxHp)), 4);
+        }
+      });
+    }
 
     const snowFlakes = Array.from({ length: 65 }, () => ({
       x: Math.random() * 800,
@@ -1373,6 +1976,9 @@
         e.preventDefault();
         const a = btn.dataset.action;
         if (a === 'interact' && !inBattle && gameStarted && !paused) inspectFrontTile();
+        if (a === 'fire' && !inBattle && gameStarted && !paused && !rpg.panel) combatFire();
+        if (a === 'melee' && !inBattle && gameStarted && !paused && !rpg.panel) combatMelee();
+        if (a === 'reload' && !inBattle && gameStarted && !paused && !rpg.panel) combatReload();
         if (a === 'pause' && gameStarted) setPaused(!paused);
         if (a === 'map' && gameStarted && !inBattle && !paused) {
           const ev = new KeyboardEvent('keydown', { key:'m' }); window.dispatchEvent(ev);
@@ -1384,7 +1990,7 @@
 
     function updateUI() {
       document.getElementById('step-counter').innerText = player.stepCount;
-      document.getElementById('bar-hp').style.width = player.hp + '%';
+      document.getElementById('bar-hp').style.width = Math.max(0, Math.min(100, (player.hp / (player.maxHp||100)) * 100)) + '%';
       document.getElementById('bar-temp').style.width = player.temp + '%';
       document.getElementById('bar-torch').style.width = player.torch + '%';
 
@@ -1472,9 +2078,7 @@
       }
 
       if (currentTile === 2) {
-        if (Math.random() < 0.28) {
-          triggerBattle();
-        }
+        maybeSpawnOpenWorldEnemy();
       }
 
       updateUI();
@@ -1637,10 +2241,11 @@
       updateUI();
     };
     document.getElementById('btn-bandage').onclick = () => {
-      if (player.bandages > 0 && player.hp < 100) {
+      if (player.bandages > 0 && player.hp < (player.maxHp||100)) {
         player.bandages--;
-        player.hp = Math.min(100, player.hp + 30);
-        addLog("Applied clean bandage. Recovered +30 HP.", "success");
+        const amt = healAmount(30);
+        player.hp = Math.min(player.maxHp||100, player.hp + amt);
+        addLog(`Applied clean bandage. Recovered +${amt} HP.`, "success");
         updateUI();
       }
     };
@@ -1749,6 +2354,10 @@
       // Remote expedition members share the same wilderness camera.
       drawRemotePlayers(cameraX, cameraY);
 
+      // Open-world enemies -- visible, roaming, engageable directly on the map.
+      drawEnemies(cameraX, cameraY);
+      if (multiplayer.joined) drawMultiplayerEnemies(cameraX, cameraY);
+
       // --- MARSHAL RICK VANCE SVG SPRITE ---
       // Drawn after the world layer so his scale is independent of tree/prop scale.
       drawRickSprite(cameraX, cameraY);
@@ -1848,6 +2457,7 @@
       inventory: { scrap: 2, medkits: 1, rations: 2, matches: 3, relics: 0, stockadeKey: 0 },
       discovered: {},
       looted: {},
+      loreFound: {},
       questStage: 0,
       objective: 'Follow the frozen trail to BARROW CREEK.',
       panel: null,
@@ -1869,6 +2479,34 @@
       {id:'junction-cache', x:33, y:23, name:'Railway Crate', reward:{scrap:2, matches:2}, text:'Found rail scrap and storm matches.'},
       {id:'key-cache', x:34, y:25, name:'Stockade Warden', reward:{stockadeKey:1}, text:'Found the WAYSTATION KEY on a frozen warden.'}
     ];
+
+    // ============================================================
+    // FIELD NOTES -- ambient world-building, not tied to quest stages.
+    // Purely environmental storytelling: found once, logged, done. Keeps
+    // the frontier feeling lived-in without touching the quest machinery.
+    // Local per-player (not server-synced) so this is safe in co-op too --
+    // everyone finds their own copies as they wander.
+    // ============================================================
+    const FIELD_NOTES = [
+      { id:'note-wagon', x:9, y:9, title:'ABANDONED WAGON',
+        text:"A supply wagon, tipped on its side and drifted half over with snow. A child's carved wooden horse lies just outside the reach of a stiff, outstretched hand. Rick doesn't stay long." },
+      { id:'note-radio', x:23, y:17, title:'DEAD MAN\'S RADIO',
+        text:"A hand-crank radio, still turning faintly on its own weight. Between static: \"...Last Spike holding... anyone on the timber line, we still got a fire going...\" It cuts out before a number." },
+      { id:'note-grave', x:14, y:24, title:'MARKED GRAVE',
+        text:"A rifle stock, jammed butt-first into a mound of packed snow. Someone scratched into the wood: \"DON'T LET THEM KEEP THEIR TEETH. BURN WHAT YOU DROP.\"" },
+      { id:'note-claws', x:11, y:19, title:'CLAW MARKS',
+        text:"Deep gouges score the bark of every tree in this clearing, shoulder-height and higher. Whatever's making them out here, there's more of it every winter." }
+    ];
+    function checkFieldNotes() {
+      FIELD_NOTES.forEach(n => {
+        if (rpg.loreFound[n.id]) return;
+        if (Math.abs(player.tileX - n.x) + Math.abs(player.tileY - n.y) <= 2) {
+          rpg.loreFound[n.id] = true;
+          addLog(`FIELD NOTE: ${n.title}`, 'success');
+          showToast(n.title, n.text);
+        }
+      });
+    }
 
     const style = document.createElement('style');
     style.textContent = `
@@ -1965,8 +2603,8 @@
     function closePanels(){rpg.panel=null;[mapOverlay,invOverlay,journalOverlay].forEach(o=>o.style.display='none');}
 
     document.getElementById('use-medkit').onclick=()=>{
-      if(multiplayer.joined){ if(player.hp<100) sendWorldAction('use_item',{item:'medkits'}); return; }
-      if(rpg.inventory.medkits>0&&player.hp<100){rpg.inventory.medkits--;player.hp=Math.min(100,player.hp+40);addLog('Used a field medkit. +40 HP','success');updateUI();renderInventory();}
+      if(multiplayer.joined){ if(player.hp<(player.maxHp||100)) sendWorldAction('use_item',{item:'medkits'}); return; }
+      if(rpg.inventory.medkits>0&&player.hp<(player.maxHp||100)){rpg.inventory.medkits--;const amt=healAmount(40);player.hp=Math.min(player.maxHp||100,player.hp+amt);addLog(`Used a field medkit. +${amt} HP`,'success');updateUI();renderInventory();}
     };
     document.getElementById('eat-ration').onclick=()=>{
       if(multiplayer.joined){ sendWorldAction('use_item',{item:'rations'}); return; }
@@ -1987,6 +2625,9 @@
       if(k==='i'){e.preventDefault();rpg.panel==='inventory'?closePanels():openPanel('inventory');}
       if(k==='j'){e.preventDefault();rpg.panel==='journal'?closePanels():openPanel('journal');}
       if(k==='e'&&!inBattle&&!paused){interactRPG();}
+      if(k==='f'&&!inBattle&&!paused&&!rpg.panel){combatFire();}
+      if(k==='v'&&!inBattle&&!paused&&!rpg.panel){combatMelee();}
+      if(k==='r'&&!inBattle&&!paused&&!rpg.panel){combatReload();}
       if(k==='escape'&&rpg.panel){closePanels();e.preventDefault();}
     });
 
@@ -2029,6 +2670,7 @@
           }
         }
       });
+      checkFieldNotes();
       // Deeper cold when exhausted: the torch is a real survival resource.
       if(player.torch<=0){player.temp=Math.max(0,player.temp-0.45);if(player.stepCount%6===0)addLog('Without a torch, the cold bites deeper.','warning');}
       if(player.temp<=0&&player.stepCount%4===0){player.hp=Math.max(0,player.hp-4);addLog('The Long Freeze is killing Rick. Find warmth.','danger');}
@@ -2068,14 +2710,14 @@
     // Save/load extends the existing local save model with world progression.
     function saveRPGGame(){
       if(!gameStarted||inBattle)return false;
-      const snapshot={version:3,savedAt:Date.now(),player:{...player},rpg:multiplayer.joined?null:{inventory:rpg.inventory,discovered:rpg.discovered,looted:rpg.looted,questStage:rpg.questStage,objective:rpg.objective},roomCode:multiplayer.joined?multiplayer.roomCode:''};
+      const snapshot={version:3,savedAt:Date.now(),player:{...player},rpg:multiplayer.joined?null:{inventory:rpg.inventory,discovered:rpg.discovered,looted:rpg.looted,loreFound:rpg.loreFound,questStage:rpg.questStage,objective:rpg.objective},roomCode:multiplayer.joined?multiplayer.roomCode:''};
       try{localStorage.setItem(RPG_SAVE_KEY,JSON.stringify(snapshot));return true;}catch(e){return false;}
     }
     function loadRPGGame(){
       const raw=localStorage.getItem(RPG_SAVE_KEY);if(!raw){addLog('No expanded field save found.','warning');return false;}
       try{
         const s=JSON.parse(raw);Object.assign(player,s.player||{});
-        if(!multiplayer.joined && s.rpg){ Object.assign(rpg.inventory,s.rpg.inventory||{});rpg.discovered=s.rpg.discovered||{};rpg.looted=s.rpg.looted||{};rpg.questStage=s.rpg.questStage||0;rpg.objective=s.rpg.objective||rpg.objective; }
+        if(!multiplayer.joined && s.rpg){ Object.assign(rpg.inventory,s.rpg.inventory||{});rpg.discovered=s.rpg.discovered||{};rpg.looted=s.rpg.looted||{};rpg.loreFound=s.rpg.loreFound||{};rpg.questStage=s.rpg.questStage||0;rpg.objective=s.rpg.objective||rpg.objective; }
         gameStarted=true;paused=false;inBattle=false;rpg.gameOverShown=false;titleScreen.style.display='none';storyboardOverlay.style.display='none';pauseOverlay.style.display='none';battleOverlay.style.display='none';objectiveForStage();resize();updateUI();addLog('Expanded field save loaded.','success');return true;
       }catch(e){addLog('Expanded save is corrupted.','danger');return false;}
     }
@@ -2094,6 +2736,7 @@
 
     function loop() {
       updateMovement();
+      updateEnemies(performance.now());
       draw();
       requestAnimationFrame(loop);
     }
@@ -2245,7 +2888,7 @@
     p3bar.innerHTML=`REGION: <b>${REGION_NAMES[phase3.region]||phase3.region}</b><br>VEHICLE: ${vText}<br>CO-OP COMBAT: ${phase3.battle?.active?'ENGAGED':'READY'}`;
     vehicleBanner.style.display=(v && (v.driverId===multiplayer.playerId||(v.passengers||[]).includes(multiplayer.playerId)))?'block':'none';
     if(vehicleBanner.style.display==='block'){
-      vehicleBanner.textContent=v.driverId===multiplayer.playerId?'SNOW TRUCK: YOU ARE DRIVING — V TO EXIT':'SNOW TRUCK: RIDING WITH THE EXPEDITION — V TO EXIT';
+      vehicleBanner.textContent=v.driverId===multiplayer.playerId?'SNOW TRUCK: YOU ARE DRIVING — G TO EXIT':'SNOW TRUCK: RIDING WITH THE EXPEDITION — G TO EXIT';
     }
     document.querySelectorAll('.region-btn').forEach(b=>{
       const r=b.dataset.region;
@@ -2278,16 +2921,16 @@
     multiplayer.ws.send(JSON.stringify(msg)); return true;
   }
 
-  // V enters/exits the expedition snow truck.
+  // G enters/exits the expedition snow truck. (Moved off V so V stays free for the melee/bash combat action.)
   function toggleVehicle(){
-    if(!multiplayer.joined) return showToast('VEHICLE','Join an expedition to synchronize vehicles.');
+    if(!multiplayer.joined) return; // Solo marshals have no truck to board -- silently ignore rather than nag on every keypress.
     const v=phase3.vehicle;
     const riding=v && (v.driverId===multiplayer.playerId||(v.passengers||[]).includes(multiplayer.playerId));
     sendPhase3({type:riding?'exit_vehicle':'enter_vehicle'});
   }
   window.addEventListener('keydown',e=>{
     if(!gameStarted) return;
-    if(e.key.toLowerCase()==='v'&&!inBattle&&!paused){e.preventDefault();toggleVehicle();}
+    if(e.key.toLowerCase()==='g'&&!inBattle&&!paused){e.preventDefault();toggleVehicle();}
   });
 
   // Make the truck move with the same proven tile interpolation as Rick.
