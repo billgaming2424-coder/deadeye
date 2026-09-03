@@ -37,6 +37,16 @@ Render-ready Node.js + WebSocket build.
 - **Frontier field notes**: four hand-placed lore notes scattered around the Timber Line, discovered by walking near them, each expanding on the world and the growing threat outside the wire.
 - **Vehicle key moved off V**: the snow truck's enter/exit key is now `G` (was `V`), since `V` is now the melee/bash action.
 
+## Phase 6: UI/UX overhaul
+
+- **Fills the browser window**: the game used to be capped at a fixed 1080x680px box, wasting most of a normal monitor. It now scales up to fill the actual browser viewport (capped generously at 2200x1240 so it doesn't get absurd on ultrawide displays).
+- **Fullscreen button**: a new ⛶ FULLSCREEN button in the top HUD uses the browser's real Fullscreen API (hidden on mobile, where it's less reliable).
+- **Frontier reskin**: replaced the flat dark-navy/black HUD look with a warm weathered wood/leather/iron palette, a Rye western display font for titles and panel headers, and gradient-accented panels and buttons, while keeping the blizzard world itself cold and blue. Primary action buttons (New Game, Done) now visually stand out from secondary ones.
+- **World render scale bumped up (1.0 → 1.6x)** for better legibility of sprites, combat hit-flashes and HP bars now that there's more screen to work with.
+- **Fixed the character-customize screen**: it previously had no background panel at all and its content (including the 5th class card and the Done button) silently overflowed the screen with no way to scroll to it. It's now a proper scrollable card, reachable on any screen size.
+- **Removed internal dev labels** ("PHASE 1 CO-OP EXPEDITION", "PHASE 2 // SHARED EXPEDITION WORLD", "CO-OP ALPHA") that were leaking into player-facing UI.
+- **Mobile touch controls decluttered**: shrunk the action-button cluster, reorganized it into a tighter 3-column layout, and fixed a real gap where mobile players had no way to loot scavenge sites or open the stockade gate (added a dedicated LOOT button). The vehicle TRUCK button no longer clutters the cluster for solo players — it now only appears once you're actually in a co-op expedition.
+
 ## Deploy on Render
 
 Create a **Web Service** from GitHub, pointed at this repository.

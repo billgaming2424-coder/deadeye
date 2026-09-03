@@ -1,8 +1,8 @@
 {
   "name": "deadeye-act1-coop",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
-  "description": "DEADEYE Act I open-world co-op combat, character classes and Chase Studios intro",
+  "description": "DEADEYE Act I open-world co-op combat, character classes and a full frontier UI overhaul",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

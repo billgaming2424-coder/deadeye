@@ -4,17 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
   <title>DEADEYE // Act I: The Timber Line</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rye&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #050608;
-      --panel-bg: rgba(12, 14, 18, 0.98);
-      --border-color: #242933;
-      --accent-red: #991b1b;
-      --accent-amber: #d97706;
-      --accent-blue: #2563eb;
-      --text-main: #d1d5db;
-      --text-muted: #6b7280;
+      /* Weathered frontier palette: warm wood/leather/iron chrome around a cold blizzard world. */
+      --bg-dark: #0a0704;
+      --bg-void: #050301;
+      --panel-bg: rgba(24, 17, 11, 0.97);
+      --panel-bg-2: rgba(18, 13, 9, 0.95);
+      --border-color: #4a3620;
+      --border-light: #6e4f2c;
+      --accent-red: #a1341f;
+      --accent-amber: #c17a2b;
+      --accent-gold: #d9a441;
+      --accent-blue: #4488b8;
+      --text-main: #e4d7bd;
+      --text-muted: #9c8a6c;
       --font-stack: 'Courier New', Courier, monospace;
+      --font-display: 'Rye', 'Courier New', Courier, monospace;
     }
 
     * {
@@ -25,7 +34,7 @@
     }
 
     body {
-      background-color: var(--bg-dark);
+      background: var(--bg-void) radial-gradient(ellipse at center, #171009 0%, var(--bg-void) 72%);
       color: var(--text-main);
       font-family: var(--font-stack);
       display: flex;
@@ -37,18 +46,20 @@
 
     #game-container {
       position: relative;
-      width: min(1080px, 96vw);
-      height: min(680px, 94vh);
+      width: min(2200px, 99vw);
+      height: min(1240px, 97vh);
       background: #000;
       border: 1px solid var(--border-color);
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.95);
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(110, 79, 44, 0.25);
       display: grid;
-      grid-template-rows: 40px 1fr 145px;
+      grid-template-rows: 46px 1fr 150px;
       grid-template-columns: 1fr;
     }
+    #game-container.fullscreen-active { width: 100vw; height: 100vh; border: 0; }
 
     header#hud-top {
       background: var(--panel-bg);
+      background-image: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.15));
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
@@ -71,10 +82,10 @@
     }
 
     .bar-track {
-      width: 90px;
-      height: 9px;
-      background: #191c24;
-      border: 1px solid #323746;
+      width: 110px;
+      height: 10px;
+      background: #1a130b;
+      border: 1px solid var(--border-color);
       border-radius: 2px;
       overflow: hidden;
     }
@@ -84,9 +95,9 @@
       transition: width 0.2s ease;
     }
 
-    .fill-health { background: var(--accent-red); width: 100%; }
-    .fill-temp { background: #0ea5e9; width: 85%; }
-    .fill-torch { background: var(--accent-amber); width: 100%; }
+    .fill-health { background: linear-gradient(90deg, #7a1f10, var(--accent-red)); width: 100%; }
+    .fill-temp { background: linear-gradient(90deg, #2d6a8c, var(--accent-blue)); width: 85%; }
+    .fill-torch { background: linear-gradient(90deg, #8a5a1c, var(--accent-amber)); width: 100%; }
 
     main#viewport-container {
       position: relative;
@@ -94,7 +105,7 @@
       height: 100%;
       background: #000;
       display: grid;
-      grid-template-columns: 1fr 280px;
+      grid-template-columns: 1fr 300px;
       overflow: hidden;
     }
 
@@ -169,8 +180,8 @@
 
     #battle-command-bar {
       height: 64px;
-      background: #0f121a;
-      border-top: 2px solid #242933;
+      background: var(--panel-bg);
+      border-top: 2px solid var(--border-color);
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
@@ -187,7 +198,7 @@
     }
 
     #sidebar-panel {
-      background: rgba(10, 12, 17, 0.95);
+      background: var(--panel-bg-2);
       border-left: 1px solid var(--border-color);
       padding: 14px;
       display: flex;
@@ -204,8 +215,8 @@
     }
 
     .guide-box {
-      background: #0a0d13;
-      border: 1px solid #1f2532;
+      background: #17110a;
+      border: 1px solid var(--border-color);
       padding: 10px;
       border-radius: 2px;
       font-size: 11px;
@@ -214,9 +225,10 @@
 
     footer#hud-bottom {
       background: var(--panel-bg);
+      background-image: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.2));
       border-top: 1px solid var(--border-color);
       display: grid;
-      grid-template-columns: 280px 1fr 240px;
+      grid-template-columns: 300px 1fr 260px;
       padding: 10px 14px;
       gap: 14px;
       z-index: 10;
@@ -230,10 +242,11 @@
     }
 
     .panel-title {
-      font-size: 10px;
-      color: var(--text-muted);
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--accent-gold);
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       margin-bottom: 4px;
     }
 
@@ -244,7 +257,8 @@
     }
 
     .cmd-btn {
-      background: #12151c;
+      background: #1a130b;
+      background-image: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.15));
       border: 1px solid var(--border-color);
       color: var(--text-main);
       font-family: var(--font-stack);
@@ -257,27 +271,35 @@
     }
 
     .cmd-btn:hover {
-      background: #1e2430;
+      background: #2a1d10;
       border-color: var(--accent-amber);
       color: #fff;
     }
+
+    .cmd-btn.cmd-btn-primary {
+      border-color: var(--accent-gold);
+      background: linear-gradient(180deg, #5a3a17, #3a2410);
+      color: #fbe7bd;
+      font-weight: bold;
+    }
+    .cmd-btn.cmd-btn-primary:hover { border-color: #f0c266; background: linear-gradient(180deg, #6b4620, #462d13); }
 
     #log-feed {
       height: 95px;
       overflow-y: auto;
       font-size: 11px;
       line-height: 1.4;
-      color: #9ca3af;
+      color: var(--text-muted);
       padding-right: 4px;
     }
 
     #log-feed p.warning { color: var(--accent-amber); }
-    #log-feed p.danger { color: #ef4444; }
-    #log-feed p.success { color: #10b981; }
+    #log-feed p.danger { color: #e0533f; }
+    #log-feed p.success { color: #5fae6e; }
 
     .loadout-box {
-      border: 1px solid #20242e;
-      background: #101217;
+      border: 1px solid var(--border-color);
+      background: #14100a;
       padding: 6px 10px;
       border-radius: 2px;
       display: flex;
@@ -323,26 +345,27 @@
       width: min(390px, 88%);
       margin-top: auto;
       margin-bottom: 34px;
-      padding: 14px;
-      background: rgba(5,7,11,.88);
-      border: 1px solid #5b6575;
+      padding: 16px;
+      background: rgba(15,10,5,.9);
+      background-image: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.2));
+      border: 1px solid var(--border-light);
       box-shadow: 0 10px 40px rgba(0,0,0,.8);
       text-align: center;
     }
-    .title-menu h1 { font-size: 15px; letter-spacing: 3px; color: #f1dfc1; margin-bottom: 6px; }
-    .title-menu p { font-size: 10px; color: #9ca3af; margin-bottom: 10px; }
+    .title-menu h1 { font-family: var(--font-display); font-size: 26px; letter-spacing: 3px; color: #f1dfc1; margin-bottom: 4px; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
+    .title-menu p { font-size: 10px; color: var(--text-muted); margin-bottom: 10px; letter-spacing: .5px; }
     .title-menu .cmd-btn { width: 100%; margin-top: 6px; padding: 10px; }
-    #pause-overlay { display: none; z-index: 55; background: rgba(1,3,6,.78); }
+    #pause-overlay { display: none; z-index: 55; background: rgba(4,2,1,.82); }
     .pause-card {
       width: min(360px, 84%);
       padding: 20px;
-      background: rgba(10,13,19,.97);
-      border: 2px solid #4b5563;
+      background: var(--panel-bg);
+      border: 2px solid var(--border-light);
       text-align: center;
       box-shadow: 0 0 70px rgba(0,0,0,.9);
     }
-    .pause-card h2 { color: #fef08a; letter-spacing: 4px; font-size: 18px; margin-bottom: 10px; }
-    .pause-card p { color: #9ca3af; font-size: 11px; margin-bottom: 14px; }
+    .pause-card h2 { font-family: var(--font-display); color: var(--accent-gold); letter-spacing: 4px; font-size: 22px; margin-bottom: 10px; }
+    .pause-card p { color: var(--text-muted); font-size: 11px; margin-bottom: 14px; }
     .pause-card .cmd-btn { width: 100%; margin-top: 7px; padding: 9px; }
     #hud-controls { display:flex; gap:6px; align-items:center; }
     #hud-controls .cmd-btn { padding:5px 8px; font-size:10px; }
@@ -352,61 +375,69 @@
     /* ============================================================
        PHASE 1 CO-OP MULTIPLAYER UI
        ============================================================ */
-    #coop-panel { margin-top:10px; border-top:1px solid #2a3340; padding-top:10px; }
-    #coop-status { font-size:10px; color:#94a3b8; margin:6px 0; min-height:14px; }
+    #coop-panel { margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px; }
+    #coop-status { font-size:10px; color:var(--text-muted); margin:6px 0; min-height:14px; }
     .coop-row { display:flex; gap:6px; margin:6px 0; }
-    .coop-row input { min-width:0; flex:1; background:#080b10; color:#e5e7eb; border:1px solid #303846; padding:8px; font-family:var(--font-stack); text-transform:uppercase; }
-    #btn-create-room { border-color:#2563eb; }
-    #btn-join-room { border-color:#16a34a; }
-    #net-indicator { font-size:10px; color:#6b7280; border:1px solid #242933; padding:4px 7px; background:#0a0d13; }
-    #net-indicator.online { color:#86efac; border-color:#166534; }
+    .coop-row input { min-width:0; flex:1; background:#100c07; color:var(--text-main); border:1px solid var(--border-color); padding:8px; font-family:var(--font-stack); text-transform:uppercase; }
+    #net-indicator { font-size:10px; color:var(--text-muted); border:1px solid var(--border-color); padding:4px 7px; background:#17110a; }
+    #net-indicator.online { color:#86efac; border-color:#3d6b40; }
     #net-indicator.connecting { color:#fef08a; border-color:#854d0e; }
 
     /* ============================================================
        MARSHAL CUSTOMIZATION
        ============================================================ */
     #charcreate-overlay {
-      position: absolute; inset: 0; background: #030406; display: none;
-      flex-direction: column; justify-content: center; align-items: center;
-      padding: 24px; z-index: 65; text-align: center; overflow-y: auto;
+      position: absolute; inset: 0; background: rgba(3,2,1,.92); display: none;
+      flex-direction: column; align-items: center;
+      padding: 28px 24px; z-index: 65; text-align: center; overflow-y: auto;
     }
     #charcreate-overlay.active { display: flex; }
-    .cc-panel { max-width: 560px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
-    .cc-panel h2 { color: #fef08a; letter-spacing: 3px; font-size: 15px; }
-    .cc-panel .story-text { font-size: 10px; color: #9ca3af; }
+    .cc-panel {
+      max-width: 620px; width: 100%; display: flex; flex-direction: column; gap: 12px;
+      margin: auto; background: var(--panel-bg); background-image: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.15));
+      border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,.8);
+      padding: 20px; text-align: left;
+    }
+    .cc-panel h2 { font-family: var(--font-display); color: var(--accent-gold); letter-spacing: 3px; font-size: 18px; text-align: center; }
+    .cc-panel .story-text { font-size: 10px; color: var(--text-muted); text-align: center; }
     .cc-top-row { display: flex; align-items: center; gap: 16px; text-align: left; }
     .cc-preview-box {
-      width: 96px; height: 120px; background: #0a0d13; border: 1px solid #1f2532;
+      width: 96px; height: 120px; background: #14100a; border: 1px solid var(--border-color);
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     #cc-preview-canvas { image-rendering: pixelated; width: 64px; height: 80px; }
     .cc-fields { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .cc-fields input { background:#080b10; color:#e5e7eb; border:1px solid #303846; padding:8px; font-family:var(--font-stack); }
+    .cc-fields input { background:#100c07; color:var(--text-main); border:1px solid var(--border-color); padding:8px; font-family:var(--font-stack); }
     .cc-group { text-align: left; }
-    .cc-group-label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .cc-group-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
     .cc-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
-    .cc-swatch { width: 26px; height: 26px; border-radius: 2px; border: 2px solid #242933; cursor: pointer; padding: 0; }
-    .cc-swatch.selected { border-color: #fef08a; box-shadow: 0 0 0 1px #fef08a; }
-    .cc-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .cc-swatch { width: 26px; height: 26px; border-radius: 2px; border: 2px solid var(--border-color); cursor: pointer; padding: 0; }
+    .cc-swatch.selected { border-color: var(--accent-gold); box-shadow: 0 0 0 1px var(--accent-gold); }
+    .cc-actions { display: flex; gap: 8px; margin-top: 8px; }
     .cc-actions .cmd-btn { flex: 1; }
     #cc-classes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
     .cc-class-card {
-      background:#0a0d13; border:1px solid #242933; color:#d1d5db; text-align:left;
+      background:#14100a; border:1px solid var(--border-color); color:var(--text-main); text-align:left;
       padding:7px 9px; cursor:pointer; font-family:var(--font-stack); font-size:11px;
     }
-    .cc-class-card.selected { border-color:#f59e0b; background:#171008; color:#fef08a; }
+    .cc-class-card.selected { border-color:var(--accent-gold); background:#241a0c; color:#fbe7bd; }
     .cc-class-card b { display:block; font-size:11px; letter-spacing:0.5px; }
+    @media (max-height: 760px) {
+      #charcreate-overlay { align-items: flex-start; padding-top: 16px; padding-bottom: 16px; }
+      .cc-panel { margin: 0 auto; }
+    }
 
     /* ================= MOBILE / TOUCH CONTROLS ================= */
     #mobile-controls { display:none; position:absolute; inset:0; z-index:18; pointer-events:none; }
     .touch-pad, .touch-actions { position:absolute; bottom:14px; pointer-events:auto; }
     .touch-pad { left:14px; width:154px; height:154px; }
-    .touch-actions { right:14px; display:grid; grid-template-columns:repeat(2,64px); gap:10px; align-items:end; }
-    .touch-btn { width:64px; height:64px; border:1px solid #526579; border-radius:50%; background:rgba(8,13,20,.82); color:#f8fafc; font-family:var(--font-stack); font-size:18px; touch-action:none; -webkit-tap-highlight-color:transparent; box-shadow:0 4px 18px rgba(0,0,0,.4); }
-    .touch-btn:active { background:#243244; transform:scale(.96); }
+    .touch-actions { right:10px; display:grid; grid-template-columns:repeat(3,52px); gap:7px; align-items:end; }
+    .touch-btn { width:64px; height:64px; border:1px solid var(--border-light); border-radius:50%; background:rgba(20,14,9,.85); color:#f3e7cf; font-family:var(--font-stack); font-size:18px; touch-action:none; -webkit-tap-highlight-color:transparent; box-shadow:0 4px 18px rgba(0,0,0,.5); }
+    .touch-btn:active { background:#3a2712; transform:scale(.96); }
     .touch-dir { position:absolute; }
     .touch-up { left:45px; top:0; } .touch-left { left:0; top:45px; } .touch-down { left:45px; top:90px; } .touch-right { left:90px; top:45px; }
-    .touch-small { font-size:11px; font-weight:bold; }
+    .touch-actions .touch-btn { width:52px; height:52px; font-size:9px; }
+    .touch-small { font-size:9px; font-weight:bold; letter-spacing:.3px; }
     @media (max-width: 760px), (pointer: coarse) {
       body { align-items:stretch; height:100dvh; overflow:hidden; }
       #game-container { width:100vw; height:100dvh; border:0; grid-template-rows:42px 1fr 108px; box-shadow:none; }
@@ -417,6 +448,7 @@
       #env-status { display:none; }
       #hud-controls { gap:3px; }
       #hud-controls .cmd-btn { padding:5px 5px; font-size:8px; }
+      #btn-fullscreen { display:none; }
       main#viewport-container { grid-template-columns:1fr; }
       #sidebar-panel { display:none; }
       footer#hud-bottom { grid-template-columns:1fr 1fr; grid-template-rows:1fr; height:108px; padding:6px 7px; gap:7px; }
@@ -615,6 +647,7 @@
         </div>
         <span id="net-indicator">CO-OP: OFFLINE</span>
         <button class="cmd-btn" id="btn-music">MUSIC: OFF</button>
+        <button class="cmd-btn" id="btn-fullscreen" title="Toggle fullscreen">⛶ FULLSCREEN</button>
         <button class="cmd-btn" id="btn-pause">PAUSE</button>
       </div>
     </header>
@@ -626,18 +659,18 @@
 
         <div id="title-screen">
           <div class="title-menu">
-            <h1>DEADEYE // ACT I — CO-OP ALPHA</h1>
-            <p>THE TIMBER LINE — SURVIVE THE LONG FREEZE.</p>
-            <button class="cmd-btn" id="btn-new-game">NEW GAME (SOLO)</button>
+            <h1>DEADEYE</h1>
+            <p>ACT I — THE TIMBER LINE // SURVIVE THE LONG FREEZE.</p>
+            <button class="cmd-btn cmd-btn-primary" id="btn-new-game">NEW GAME (SOLO)</button>
             <button class="cmd-btn" id="btn-continue">CONTINUE / LOAD SAVE</button>
-            <button class="cmd-btn" id="btn-customize" style="border-color:#a855f7;">CUSTOMIZE MARSHAL</button>
+            <button class="cmd-btn" id="btn-customize" style="border-color:#8a6a9c;">CUSTOMIZE MARSHAL</button>
             <div id="coop-panel">
-              <div style="font-size:11px;color:#93c5fd;letter-spacing:1px;">PHASE 1 CO-OP EXPEDITION</div>
-              <div id="coop-status">OFFLINE — Create a room or enter a room code.<br><span style="font-size:9px;color:#f59e0b">PHASE 2 // SHARED EXPEDITION WORLD</span></div>
+              <div class="panel-title" style="margin:0 0 4px;">Co-Op Expedition</div>
+              <div id="coop-status">OFFLINE — Create a room or enter a room code.</div>
               <div class="coop-row"><input id="coop-name" maxlength="18" placeholder="Marshal name"></div>
-              <button class="cmd-btn" id="btn-create-room">CREATE EXPEDITION</button>
-              <div class="coop-row"><input id="coop-room-code" maxlength="6" placeholder="ROOM CODE"><button class="cmd-btn" id="btn-join-room">JOIN</button></div>
-              <button class="cmd-btn" id="btn-start-coop" style="display:none;border-color:#22c55e;">START CO-OP STORY</button>
+              <button class="cmd-btn" id="btn-create-room" style="border-color:#3f7cac;">CREATE EXPEDITION</button>
+              <div class="coop-row"><input id="coop-room-code" maxlength="6" placeholder="ROOM CODE"><button class="cmd-btn" id="btn-join-room" style="border-color:#4a8c4e;">JOIN</button></div>
+              <button class="cmd-btn" id="btn-start-coop" style="display:none;border-color:#4a8c4e;">START CO-OP STORY</button>
             </div>
             <button class="cmd-btn" id="btn-title-music">MUSIC: OFF</button>
           </div>
@@ -673,11 +706,11 @@
             <div class="cc-group">
               <div class="cc-group-label">Survivor Class</div>
               <div id="cc-classes"></div>
-              <div id="cc-class-tagline" style="font-size:10px;color:#f59e0b;margin-top:5px;"></div>
+              <div id="cc-class-tagline" style="font-size:10px;color:var(--accent-gold);margin-top:5px;"></div>
             </div>
             <div class="cc-actions">
               <button class="cmd-btn" id="cc-random">RANDOM</button>
-              <button class="cmd-btn" id="cc-done" style="border-color:#22c55e;">DONE</button>
+              <button class="cmd-btn cmd-btn-primary" id="cc-done">DONE</button>
             </div>
           </div>
         </div>
@@ -730,13 +763,14 @@
             <button class="touch-btn touch-dir touch-right" data-key="arrowright">▶</button>
           </div>
           <div class="touch-actions">
-            <button class="touch-btn touch-small" data-key="shift">RUN</button>
-            <button class="touch-btn touch-small" data-action="interact">USE</button>
             <button class="touch-btn touch-small" data-action="fire">FIRE</button>
             <button class="touch-btn touch-small" data-action="melee">BASH</button>
-            <button class="touch-btn touch-small" data-action="reload">R</button>
-            <button class="touch-btn touch-small" data-action="pause">II</button>
+            <button class="touch-btn touch-small" data-action="reload">RLD</button>
+            <button class="touch-btn touch-small" data-action="interact">USE</button>
+            <button class="touch-btn touch-small" data-action="loot">LOOT</button>
+            <button class="touch-btn touch-small" data-key="shift">RUN</button>
             <button class="touch-btn touch-small" data-action="map">MAP</button>
+            <button class="touch-btn touch-small" data-action="pause">II</button>
           </div>
         </div>
 
@@ -910,6 +944,7 @@
       else initStudioIntro();
     })();
 
+    const gameContainer = document.getElementById('game-container');
     const canvas = document.getElementById('overworld-canvas');
     const ctx = canvas.getContext('2d');
     const battleCanvas = document.getElementById('battle-canvas');
@@ -1225,7 +1260,7 @@
 
     // World is deliberately zoomed in so trees, drifts, ruins and props feel
     // large and imposing. Rick is rendered separately at a smaller scale.
-    const WORLD_SCALE = 1.0;
+    const WORLD_SCALE = 1.6;
     const RICK_DRAW_W = 30;
     const RICK_DRAW_H = 38;
 
@@ -1976,6 +2011,7 @@
         e.preventDefault();
         const a = btn.dataset.action;
         if (a === 'interact' && !inBattle && gameStarted && !paused) inspectFrontTile();
+        if (a === 'loot' && !inBattle && gameStarted && !paused && typeof interactRPG === 'function') interactRPG();
         if (a === 'fire' && !inBattle && gameStarted && !paused && !rpg.panel) combatFire();
         if (a === 'melee' && !inBattle && gameStarted && !paused && !rpg.panel) combatMelee();
         if (a === 'reload' && !inBattle && gameStarted && !paused && !rpg.panel) combatReload();
@@ -2191,6 +2227,30 @@
     document.getElementById('btn-continue').onclick = () => { startMusic(); loadGame(); };
     document.getElementById('btn-pause').onclick = () => setPaused(true);
     document.getElementById('btn-resume').onclick = () => setPaused(false);
+
+    // Fullscreen toggle -- requests fullscreen on the game container itself so the
+    // letterboxed panels/HUD fill the whole screen rather than the raw canvas alone.
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    function isFullscreenActive() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+    function updateFullscreenButton() {
+      if (!btnFullscreen) return;
+      btnFullscreen.textContent = isFullscreenActive() ? '⛶ EXIT FULLSCREEN' : '⛶ FULLSCREEN';
+      gameContainer.classList.toggle('fullscreen-active', isFullscreenActive());
+    }
+    if (btnFullscreen) {
+      btnFullscreen.onclick = () => {
+        if (!isFullscreenActive()) {
+          const req = gameContainer.requestFullscreen || gameContainer.webkitRequestFullscreen;
+          if (req) { req.call(gameContainer).catch(() => {}); }
+          else { addLog('Fullscreen is not supported in this browser.', 'warning'); }
+        } else {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (exit) exit.call(document).catch(() => {});
+        }
+      };
+      document.addEventListener('fullscreenchange', updateFullscreenButton);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    }
 
     document.getElementById('btn-create-room').onclick=()=>connectCoop('create');
     document.getElementById('btn-join-room').onclick=()=>{
@@ -2510,15 +2570,15 @@
 
     const style = document.createElement('style');
     style.textContent = `
-      .rpg-overlay{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(2,5,9,.88);font-family:'Courier New',monospace;color:#e5edf2}
-      .rpg-panel{width:min(760px,90%);max-height:88%;overflow:auto;background:#0b1119;border:2px solid #526579;box-shadow:0 0 40px #000;padding:18px}
-      .rpg-title{color:#f59e0b;font-size:18px;letter-spacing:2px;margin-bottom:10px}.rpg-sub{color:#91a4b7;font-size:11px;margin-bottom:14px}
-      .rpg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.item-card{border:1px solid #334155;background:#101923;padding:10px}.item-card b{color:#f8fafc}.item-card span{float:right;color:#f59e0b}
-      .quest-row{padding:9px;border-left:3px solid #334155;margin:6px 0;background:#0e1620}.quest-row.active{border-left-color:#f59e0b}.quest-row.done{border-left-color:#10b981;color:#9fb8aa}
-      #rpg-objective{position:absolute;left:12px;top:12px;z-index:12;max-width:330px;background:rgba(6,10,15,.78);border-left:3px solid #f59e0b;padding:7px 10px;font:10px 'Courier New',monospace;color:#dbe7ee;letter-spacing:.4px}
-      #rpg-toast{position:absolute;left:50%;top:20%;transform:translateX(-50%);z-index:70;display:none;background:rgba(8,12,18,.95);border:1px solid #f59e0b;color:#fff;padding:12px 20px;font:bold 13px 'Courier New',monospace;text-align:center;box-shadow:0 0 30px #000}
-      #gameover-card{text-align:center}.rpg-btn{margin:6px;padding:9px 14px;background:#121b26;border:1px solid #56677a;color:#eaf2f7;font-family:'Courier New',monospace;cursor:pointer}.rpg-btn:hover{border-color:#f59e0b;color:#fff}
-      #map-canvas{width:100%;height:auto;image-rendering:pixelated;border:1px solid #526579;background:#09111a}
+      .rpg-overlay{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(5,3,1,.9);font-family:'Courier New',monospace;color:#e4d7bd}
+      .rpg-panel{width:min(760px,90%);max-height:88%;overflow:auto;background:#150f09;border:2px solid #4a3620;box-shadow:0 0 40px #000;padding:18px}
+      .rpg-title{font-family:'Rye','Courier New',monospace;color:#d9a441;font-size:19px;letter-spacing:2px;margin-bottom:10px}.rpg-sub{color:#a08b6c;font-size:11px;margin-bottom:14px}
+      .rpg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.item-card{border:1px solid #4a3620;background:#1c140c;padding:10px}.item-card b{color:#f3e7cf}.item-card span{float:right;color:#c17a2b}
+      .quest-row{padding:9px;border-left:3px solid #4a3620;margin:6px 0;background:#160f08}.quest-row.active{border-left-color:#c17a2b}.quest-row.done{border-left-color:#5fae6e;color:#9fb8aa}
+      #rpg-objective{position:absolute;left:12px;top:12px;z-index:12;max-width:330px;background:rgba(15,10,5,.82);border-left:3px solid #c17a2b;padding:7px 10px;font:10px 'Courier New',monospace;color:#e4d7bd;letter-spacing:.4px}
+      #rpg-toast{position:absolute;left:50%;top:20%;transform:translateX(-50%);z-index:70;display:none;background:rgba(18,13,7,.96);border:1px solid #c17a2b;color:#fff;padding:12px 20px;font:bold 13px 'Courier New',monospace;text-align:center;box-shadow:0 0 30px #000}
+      #gameover-card{text-align:center}.rpg-btn{margin:6px;padding:9px 14px;background:#1a130b;border:1px solid #6e4f2c;color:#e4d7bd;font-family:'Courier New',monospace;cursor:pointer}.rpg-btn:hover{border-color:#c17a2b;color:#fff}
+      #map-canvas{width:100%;height:auto;image-rendering:pixelated;border:1px solid #4a3620;background:#0e0a06}
     `;
     document.head.appendChild(style);
 
@@ -2766,13 +2826,13 @@
   style.textContent=`
     .rpg-close{float:right;margin:-4px 0 8px 12px;min-width:38px;font:bold 18px monospace;background:#241215;border:1px solid #ef4444;color:#fecaca;border-radius:4px;cursor:pointer}
     .rpg-close:active{transform:scale(.96)}
-    #phase3-bar{position:absolute;right:12px;top:12px;z-index:24;max-width:300px;background:rgba(6,10,15,.88);border-right:3px solid #60a5fa;padding:7px 10px;color:#dbe7ee;font:10px 'Courier New',monospace;text-align:right}
+    #phase3-bar{position:absolute;right:12px;top:12px;z-index:24;max-width:300px;background:rgba(15,10,5,.88);border-right:3px solid #4488b8;padding:7px 10px;color:#e4d7bd;font:10px 'Courier New',monospace;text-align:right}
     #region-travel{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
-    .region-btn{font:10px 'Courier New',monospace;padding:7px 8px;background:#101923;color:#cbd5e1;border:1px solid #3c5366;cursor:pointer}
-    .region-btn:hover{border-color:#f59e0b;color:#fff}
+    .region-btn{font:10px 'Courier New',monospace;padding:7px 8px;background:#1c140c;color:#e4d7bd;border:1px solid #4a3620;cursor:pointer}
+    .region-btn:hover{border-color:#c17a2b;color:#fff}
     .region-btn:disabled{opacity:.45;cursor:not-allowed}
-    #coop-battle-status{position:absolute;left:12px;top:10px;z-index:4;background:rgba(4,8,12,.78);border:1px solid #526579;padding:6px 9px;color:#eaf2f7;font:10px 'Courier New',monospace;max-width:calc(100% - 24px)}
-    #vehicle-banner{position:absolute;left:50%;bottom:82px;transform:translateX(-50%);z-index:30;display:none;background:rgba(5,10,15,.9);border:1px solid #60a5fa;color:#dbeafe;padding:7px 12px;font:bold 11px 'Courier New',monospace}
+    #coop-battle-status{position:absolute;left:12px;top:10px;z-index:4;background:rgba(15,10,5,.82);border:1px solid #6e4f2c;padding:6px 9px;color:#e4d7bd;font:10px 'Courier New',monospace;max-width:calc(100% - 24px)}
+    #vehicle-banner{position:absolute;left:50%;bottom:82px;transform:translateX(-50%);z-index:30;display:none;background:rgba(15,10,5,.92);border:1px solid #4488b8;color:#dbeafe;padding:7px 12px;font:bold 11px 'Courier New',monospace}
     @media(max-width:700px){
       #phase3-bar{top:8px;right:8px;font-size:8px;max-width:46vw}
       .rpg-close{font-size:22px;min-width:48px;min-height:42px}
@@ -2886,6 +2946,8 @@
       else vText=`SNOW TRUCK // ${Math.round(v.fuel||0)} FUEL`;
     }
     p3bar.innerHTML=`REGION: <b>${REGION_NAMES[phase3.region]||phase3.region}</b><br>VEHICLE: ${vText}<br>CO-OP COMBAT: ${phase3.battle?.active?'ENGAGED':'READY'}`;
+    const vehicleTouchBtn=document.querySelector('.touch-actions [data-action="vehicle"]');
+    if(vehicleTouchBtn) vehicleTouchBtn.style.display=multiplayer.joined?'':'none';
     vehicleBanner.style.display=(v && (v.driverId===multiplayer.playerId||(v.passengers||[]).includes(multiplayer.playerId)))?'block':'none';
     if(vehicleBanner.style.display==='block'){
       vehicleBanner.textContent=v.driverId===multiplayer.playerId?'SNOW TRUCK: YOU ARE DRIVING — G TO EXIT':'SNOW TRUCK: RIDING WITH THE EXPEDITION — G TO EXIT';
@@ -3039,10 +3101,13 @@
       showToast('EXPEDITION UPDATE',msg.message||msg.event.replace(/_/g,' '));
   };
 
-  // Mobile map action remains compatible; add a dedicated VEHICLE button.
+  // Mobile map action remains compatible; add a dedicated VEHICLE button -- but only surface it
+  // once the marshal is actually in a co-op expedition, so solo mobile players (who have no
+  // truck to board) aren't stuck with a 9th dead button in the action cluster.
   const actions=document.querySelector('.touch-actions');
   if(actions&&!actions.querySelector('[data-action="vehicle"]')){
     const b=document.createElement('button');b.className='touch-btn touch-small';b.dataset.action='vehicle';b.textContent='TRUCK';
+    b.style.display='none';
     b.addEventListener('pointerdown',e=>{e.preventDefault();if(gameStarted&&!inBattle&&!paused)toggleVehicle();});
     actions.appendChild(b);
   }
