@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DEADEYE // Act I: The Timber Line</title>
+  <style>
+    :root {
+      --bg-dark: #050608;
+      --panel-bg: rgba(12, 14, 18, 0.98);
+      --border-color: #242933;
+      --accent-red: #991b1b;
+      --accent-amber: #d97706;
+      --accent-blue: #2563eb;
+      --text-main: #d1d5db;
+      --text-muted: #6b7280;
+      --font-stack: 'Courier New', Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #game-container {
+      position: relative;
+      width: min(1080px, 96vw);
+      height: min(680px, 94vh);
+      background: #000;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.95);
+      display: grid;
+      grid-template-rows: 40px 1fr 145px;
+      grid-template-columns: 1fr;
+    }
+
+    header#hud-top {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 12px;
+      letter-spacing: 1px;
+      z-index: 10;
+    }
+
+    .vitals-group {
+      display: flex;
+      gap: 16px;
+    }
+
+    .vital-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .bar-track {
+      width: 90px;
+      height: 9px;
+      background: #191c24;
+      border: 1px solid #323746;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      transition: width 0.2s ease;
+    }
+
+    .fill-health { background: var(--accent-red); width: 100%; }
+    .fill-temp { background: #0ea5e9; width: 85%; }
+    .fill-torch { background: var(--accent-amber); width: 100%; }
+
+    main#viewport-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      overflow: hidden;
+    }
+
+    canvas#overworld-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    /* Storyboard Intro Overlay */
+    #storyboard-overlay {
+      position: absolute;
+      inset: 0;
+      background: #030406;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      z-index: 30;
+      text-align: center;
+    }
+
+    .story-card {
+      max-width: 600px;
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .story-card.active {
+      display: flex;
+    }
+
+    .story-text {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #9ca3af;
+      border-left: 2px solid var(--accent-amber);
+      padding-left: 16px;
+      text-align: left;
+    }
+
+    .story-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #fef08a;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      text-align: left;
+    }
+
+    /* Character Creation Overlay */
+    #charcreate-overlay {
+      position: absolute;
+      inset: 0;
+      background: #030406;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      z-index: 35;
+      text-align: center;
+      overflow-y: auto;
+    }
+
+    .cc-panel {
+      max-width: 620px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cc-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+    }
+
+    .cc-preview-box {
+      width: 96px;
+      height: 120px;
+      background: #0a0d13;
+      border: 1px solid #1f2532;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    #cc-preview-canvas {
+      image-rendering: pixelated;
+      width: 64px;
+      height: 80px;
+    }
+
+    .cc-name-input {
+      flex: 1;
+      background: #0a0d13;
+      border: 1px solid #1f2532;
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: 2px;
+    }
+
+    .cc-swatch-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      text-align: left;
+    }
+
+    .cc-swatch-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .cc-swatch-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .cc-swatch {
+      width: 26px;
+      height: 26px;
+      border-radius: 2px;
+      border: 2px solid #242933;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .cc-swatch:hover { transform: scale(1.08); }
+    .cc-swatch.selected { border-color: #fef08a; box-shadow: 0 0 6px rgba(254, 240, 138, 0.6); }
+
+    /* Game Over / Victory Overlays */
+    #gameover-overlay, #victory-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 4, 6, 0.97);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      z-index: 40;
+      text-align: center;
+    }
+
+    .end-title {
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    #gameover-overlay .end-title { color: #ef4444; }
+    #victory-overlay .end-title { color: #fef08a; }
+
+    .end-cause {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-bottom: 6px;
+      max-width: 480px;
+    }
+
+    .end-stats {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    /* GBA Authentic Battle Scene */
+    #battle-overlay {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 20;
+    }
+
+    #battle-canvas {
+      width: 100%;
+      height: calc(100% - 64px);
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    #battle-command-bar {
+      height: 64px;
+      background: #0f121a;
+      border-top: 2px solid #242933;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 10px 16px;
+    }
+
+    .vignette-overlay {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.92);
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+      background-size: 100% 3px;
+    }
+
+    #sidebar-panel {
+      background: rgba(10, 12, 17, 0.95);
+      border-left: 1px solid var(--border-color);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .sidebar-title {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .guide-box {
+      background: #0a0d13;
+      border: 1px solid #1f2532;
+      padding: 10px;
+      border-radius: 2px;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    footer#hud-bottom {
+      background: var(--panel-bg);
+      border-top: 1px solid var(--border-color);
+      display: grid;
+      grid-template-columns: 280px 1fr 240px;
+      padding: 10px 14px;
+      gap: 14px;
+      z-index: 10;
+    }
+
+    .deck-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .panel-title {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .command-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .cmd-btn {
+      background: #12151c;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      font-size: 11px;
+      padding: 7px 4px;
+      border-radius: 2px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.1s ease;
+    }
+
+    .cmd-btn:hover {
+      background: #1e2430;
+      border-color: var(--accent-amber);
+      color: #fff;
+    }
+
+    #log-feed {
+      height: 95px;
+      overflow-y: auto;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #9ca3af;
+      padding-right: 4px;
+    }
+
+    #log-feed p.warning { color: var(--accent-amber); }
+    #log-feed p.danger { color: #ef4444; }
+    #log-feed p.success { color: #10b981; }
+
+    .loadout-box {
+      border: 1px solid #20242e;
+      background: #101217;
+      padding: 6px 10px;
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+
+    .inv-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <header id="hud-top">
+      <div class="vitals-group">
+        <div class="vital-bar">
+          <span>HP</span>
+          <div class="bar-track"><div id="bar-hp" class="bar-fill fill-health"></div></div>
+        </div>
+        <div class="vital-bar">
+          <span>TEMP</span>
+          <div class="bar-track"><div id="bar-temp" class="bar-fill fill-temp"></div></div>
+        </div>
+        <div class="vital-bar">
+          <span>TORCH</span>
+          <div class="bar-track"><div id="bar-torch" class="bar-fill fill-torch"></div></div>
+        </div>
+      </div>
+
+      <div id="env-status">
+        <span>ACT I: <strong>THE TIMBER LINE</strong></span> | 
+        <span>STEP: <strong id="step-counter" style="color: #f59e0b;">0</strong></span>
+      </div>
+    </header>
+
+    <main id="viewport-container">
+      <div style="position: relative; width: 100%; height: 100%;">
+        <canvas id="overworld-canvas"></canvas>
+        <div class="vignette-overlay"></div>
+
+        <div id="charcreate-overlay">
+          <div class="cc-panel">
+            <div class="story-title" style="text-align:center;">Create Your Marshal</div>
+            <div class="cc-row">
+              <div class="cc-preview-box"><canvas id="cc-preview-canvas" width="32" height="40"></canvas></div>
+              <input type="text" id="cc-name-input" class="cc-name-input" maxlength="18" value="Rick Vance" placeholder="Marshal's name...">
+            </div>
+            <div class="cc-row" style="flex-wrap: wrap; gap: 18px;">
+              <div class="cc-swatch-group">
+                <span class="cc-swatch-label">Duster Coat</span>
+                <div class="cc-swatch-row" data-slot="coatMain"></div>
+              </div>
+              <div class="cc-swatch-group">
+                <span class="cc-swatch-label">Cattleman Hat</span>
+                <div class="cc-swatch-row" data-slot="hatMain"></div>
+              </div>
+              <div class="cc-swatch-group">
+                <span class="cc-swatch-label">Skin Tone</span>
+                <div class="cc-swatch-row" data-slot="skin"></div>
+              </div>
+              <div class="cc-swatch-group">
+                <span class="cc-swatch-label">Hair Color</span>
+                <div class="cc-swatch-row" data-slot="hair"></div>
+              </div>
+            </div>
+            <button class="cmd-btn" id="cc-begin-btn" style="margin-top: 8px; padding: 10px; border-color: var(--accent-amber); color: #fef08a;">Begin Life on the Frontier</button>
+            <div style="font-size: 10px; color: #6b7280;">This look is saved for your Marshal. (Online co-op sync is coming in a later update.)</div>
+          </div>
+        </div>
+
+        <div id="storyboard-overlay">
+          <div class="story-card active" id="sc-1">
+            <div class="story-title">Scene I: The Cold Cabin</div>
+            <div class="story-text">Day 842 of the Long Freeze. The timber stove went dead three hours ago. Outside the frozen windows, shadows shift across the snow line.</div>
+            <button class="cmd-btn" onclick="nextStory(2)" style="margin-top: 12px; padding: 10px;">[PRESS SPACE] Continue</button>
+          </div>
+          <div class="story-card" id="sc-2">
+            <div class="story-title">Scene II: The Broadcast</div>
+            <div class="story-text">On the wooden desk sits a worn duster, a box of remaining .44 rounds, and an amber radio crackling through white noise: <i>"—to any survivors in the timber line. The Last Spike depot has iron walls and a doctor. Move south..."</i></div>
+            <button class="cmd-btn" onclick="nextStory(3)" style="margin-top: 12px; padding: 10px;">[PRESS SPACE] Continue</button>
+          </div>
+          <div class="story-card" id="sc-3">
+            <div class="story-title">Scene III: Marshal Rick Vance</div>
+            <div class="story-text">Rick checks the hammer of his lever-action rifle, pulls his wide-brim hat tight against the gale, and pushes open the cabin door. Time to see if the rumors are true.</div>
+            <button class="cmd-btn" onclick="startTheGame()" style="margin-top: 12px; padding: 10px; border-color: var(--accent-amber); color: #fef08a;">[PRESS SPACE] Step Into The Blizzard</button>
+          </div>
+        </div>
+
+        <div id="battle-overlay">
+          <canvas id="battle-canvas"></canvas>
+          <div id="battle-command-bar">
+            <button class="cmd-btn" id="b-btn-shoot">[1] Aim & Fire (.44)</button>
+            <button class="cmd-btn" id="b-btn-shove">[2] Melee Shove</button>
+            <button class="cmd-btn" id="b-btn-reload">[3] Chamber .44</button>
+            <button class="cmd-btn" id="b-btn-run">[4] Flee to Drifts</button>
+          </div>
+        </div>
+
+        <div id="gameover-overlay">
+          <div class="end-title">You Didn't Make It</div>
+          <div class="end-cause" id="gameover-cause">The blizzard claimed another soul.</div>
+          <div class="end-stats" id="gameover-stats"></div>
+          <button class="cmd-btn" id="gameover-restart-btn" style="padding: 10px 24px; border-color: var(--accent-red); color: #fca5a5;">[R] Restart Run</button>
+        </div>
+
+        <div id="victory-overlay">
+          <div class="end-title">Act I Complete</div>
+          <div class="end-cause">You forced the stockade gate and slipped through to the Last Spike depot. Iron walls, a doctor, and warmth wait inside.</div>
+          <div class="end-cause" style="color:#6b7280; font-size: 11px;">Act II: The Last Spike — coming soon.</div>
+          <div class="end-stats" id="victory-stats"></div>
+          <button class="cmd-btn" id="victory-restart-btn" style="padding: 10px 24px; border-color: var(--accent-amber); color: #fef08a;">[R] Play Act I Again</button>
+        </div>
+      </div>
+
+      <div id="sidebar-panel">
+        <div>
+          <div class="sidebar-title">Frontier Navigation</div>
+          <div class="guide-box">
+            <p><strong>ARROWS / WASD:</strong> Step</p>
+            <p><strong>SHIFT:</strong> Run Shoes</p>
+            <p><strong>Z / SPACE:</strong> Inspect Cabin / Stoke</p>
+            <p style="margin-top: 6px; color: #9ca3af;">Objective: Head south toward the waystation stockade gate.</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="sidebar-title">Marshal's Log</div>
+          <div class="guide-box">
+            <div style="display: flex; justify-content: space-between;">
+              <span>Status:</span>
+              <strong style="color: #f59e0b;">ACTIVE</strong>
+            </div>
+            <div style="margin-top: 4px; font-size: 10px; color: #6b7280;">Marshal Rick Vance is on the move.</div>
+          </div>
+        </div>
+
+        <div>
+          <button class="cmd-btn" id="btn-camp" style="width: 100%; padding: 10px;">[C] Warm by Stove</button>
+        </div>
+      </div>
+    </main>
+
+    <footer id="hud-bottom">
+      <div class="deck-panel">
+        <div class="panel-title">Survival Field Kit</div>
+        <div class="command-grid">
+          <button class="cmd-btn" id="btn-scavenge">[Z] Inspect Tile</button>
+          <button class="cmd-btn" id="btn-torch">[T] Light Torch</button>
+          <button class="cmd-btn" id="btn-reload-world">[R] Reload Rifle</button>
+          <button class="cmd-btn" id="btn-bandage">[B] Bandage</button>
+        </div>
+      </div>
+
+      <div class="deck-panel">
+        <div class="panel-title">Survival Chronicle</div>
+        <div id="log-feed">
+          <p>Intro storyboard complete. Welcome to Deadeye.</p>
+          <p class="warning">Use Arrow keys or WASD to navigate the whiteout.</p>
+        </div>
+      </div>
+
+      <div class="deck-panel">
+        <div class="panel-title">Supplies & Weapon</div>
+        <div class="loadout-box">
+          <div class="inv-row">
+            <span>Chambered:</span>
+            <strong id="ui-ammo" style="color: #f59e0b;">5 / 5</strong>
+          </div>
+          <div class="inv-row">
+            <span>.44 Cartridges:</span>
+            <span id="ui-reserve">15</span>
+          </div>
+          <div class="inv-row">
+            <span>Pine Torches:</span>
+            <span id="ui-torches">2</span>
+          </div>
+          <div class="inv-row">
+            <span>Clean Bandages:</span>
+            <span id="ui-bandages">1</span>
+          </div>
+          <div class="inv-row">
+            <span>Scrap Metal:</span>
+            <span id="ui-scrap" style="color: #93c5fd;">0 / 5</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('overworld-canvas');
+    const ctx = canvas.getContext('2d');
+    const battleCanvas = document.getElementById('battle-canvas');
+    const bCtx = battleCanvas.getContext('2d');
+    const logFeed = document.getElementById('log-feed');
+    const battleOverlay = document.getElementById('battle-overlay');
+    const storyboardOverlay = document.getElementById('storyboard-overlay');
+
+    let gameStarted = false;
+    let characterCreated = false;
+    let isDead = false;
+    let actComplete = false;
+
+    function nextStory(sceneNum) {
+      document.querySelectorAll('.story-card').forEach(c => c.classList.remove('active'));
+      document.getElementById(`sc-${sceneNum}`).classList.add('active');
+    }
+
+    function startTheGame() {
+      storyboardOverlay.style.display = 'none';
+      gameStarted = true;
+      addLog(`${characterConfig.name} steps into the blizzard. Act I begins.`, "success");
+      resize();
+    }
+
+    function resize() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+      battleCanvas.width = battleOverlay.clientWidth;
+      battleCanvas.height = battleOverlay.clientHeight - 64;
+      draw();
+    }
+    window.addEventListener('resize', resize);
+
+    function addLog(msg, type = '') {
+      const p = document.createElement('p');
+      if (type) p.className = type;
+      p.innerText = msg;
+      logFeed.appendChild(p);
+      logFeed.scrollTop = logFeed.scrollHeight;
+    }
+
+    const TILE_SIZE = 32;
+    const MAP_COLS = 18;
+    const MAP_ROWS = 14;
+
+    // Tile legend: 0 floor, 1 pine (blocked), 2 encounter brush, 3 waystation
+    // gate (blocked until scrapped open), 4 cabin stove, 5 scavengeable scrap pile.
+    const map = [
+      1,1,1,1,1,1,1,1,3,3,3,3,1,1,1,1,1,1,
+      1,5,0,0,0,1,1,2,2,2,2,1,0,0,0,0,5,1,
+      1,0,4,0,0,0,1,2,2,2,2,1,0,3,3,3,0,1,
+      1,0,0,0,0,0,0,0,0,5,0,0,0,3,0,3,0,1,
+      1,1,3,3,0,1,1,0,0,0,0,1,0,3,3,3,0,1,
+      1,2,2,0,0,2,1,1,0,0,1,1,0,0,0,0,0,1,
+      1,2,2,2,0,2,2,1,0,0,1,0,0,0,1,1,0,1,
+      1,2,2,2,0,5,0,0,0,0,0,0,1,0,1,1,0,1,
+      1,0,5,0,0,0,0,0,1,1,0,0,1,0,0,5,0,1,
+      1,0,1,1,0,0,1,0,1,1,0,0,0,0,2,2,0,1,
+      1,0,1,1,0,0,1,0,0,0,0,1,0,0,2,2,0,1,
+      1,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,1,
+      1,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1,
+      1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    ];
+    const ORIGINAL_MAP = map.slice();
+    const GATE_SCRAP_COST = 5;
+
+    const DIR = { DOWN: 0, UP: 1, LEFT: 2, RIGHT: 3 };
+
+    // ============================================================
+    // CHARACTER CUSTOMIZATION
+    // Local appearance/name only for now — this config is shaped so it can
+    // be dropped straight into a multiplayer handshake payload later
+    // (name + 4 palette hex values) once a real netcode server exists.
+    // ============================================================
+    function clamp255(n) { return Math.max(0, Math.min(255, n)); }
+    function shadeColor(hex, percent) {
+      const num = parseInt(hex.replace('#', ''), 16);
+      let r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
+      const amt = Math.round(2.55 * percent);
+      r = clamp255(r + amt); g = clamp255(g + amt); b = clamp255(b + amt);
+      return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    const PALETTE_OPTIONS = {
+      coatMain: ['#2b3c46', '#3f2b26', '#33301f', '#2a2a2f', '#1f3a2e'],
+      hatMain: ['#4a3322', '#2e2a26', '#5c3a1e', '#3a3a3a', '#4a1f1f'],
+      skin: ['#c58760', '#e0ac82', '#8a5a3c', '#f0c9a0', '#6b4028'],
+      hair: ['#2b1c15', '#0f0d0c', '#5c4630', '#8c8c8c', '#7a2e1a']
+    };
+
+    const characterConfig = {
+      name: 'Rick Vance',
+      coatMain: PALETTE_OPTIONS.coatMain[0],
+      hatMain: PALETTE_OPTIONS.hatMain[0],
+      skin: PALETTE_OPTIONS.skin[0],
+      hair: PALETTE_OPTIONS.hair[0]
+    };
+
+    function initCharCreation() {
+      Object.keys(PALETTE_OPTIONS).forEach(slot => {
+        const row = document.querySelector(`.cc-swatch-row[data-slot="${slot}"]`);
+        if (!row) return;
+        PALETTE_OPTIONS[slot].forEach((hex, i) => {
+          const btn = document.createElement('div');
+          btn.className = 'cc-swatch' + (i === 0 ? ' selected' : '');
+          btn.style.background = hex;
+          btn.onclick = () => {
+            characterConfig[slot] = hex;
+            row.querySelectorAll('.cc-swatch').forEach(s => s.classList.remove('selected'));
+            btn.classList.add('selected');
+            renderCharPreview();
+          };
+          row.appendChild(btn);
+        });
+      });
+      renderCharPreview();
+    }
+
+    function renderCharPreview() {
+      const pCanvas = document.getElementById('cc-preview-canvas');
+      const pCtx = pCanvas.getContext('2d');
+      pCtx.imageSmoothingEnabled = false;
+      pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+      const previewImg = new Image();
+      previewImg.onload = () => pCtx.drawImage(previewImg, 0, 0, pCanvas.width, pCanvas.height);
+      previewImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildRickSVG(DIR.DOWN, 0, characterConfig));
+    }
+
+    document.getElementById('cc-begin-btn').onclick = () => {
+      const nameVal = document.getElementById('cc-name-input').value.trim();
+      if (nameVal) characterConfig.name = nameVal.slice(0, 18);
+      characterCreated = true;
+      document.getElementById('charcreate-overlay').style.display = 'none';
+      document.querySelectorAll('#sidebar-panel .guide-box')[1].querySelector('div[style*="color: #6b7280"]').innerText = `${characterConfig.name} is on the move.`;
+      buildAllRickSprites(characterConfig);
+    };
+
+    // ============================================================
+    // RICK VANCE SVG MULTI-FRAME SPRITE SYSTEM
+    // 4 directions × 4 walk frames. SVG is used as a crisp,
+    // authored sprite source; Canvas renders the frames at pixel size.
+    // ============================================================
+    const RICK_FRAME_W = 32;
+    const RICK_FRAME_H = 40;
+
+    // World is deliberately zoomed in so trees, drifts, ruins and props feel
+    // large and imposing. Rick is rendered separately at a smaller scale.
+    const WORLD_SCALE = 1.5;
+    const RICK_DRAW_W = 30;
+    const RICK_DRAW_H = 38;
+
+    function r(x, y, w, h, color) {
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${color}"/>`;
+    }
+
+    function buildRickSVG(dir, frame, palette) {
+      palette = palette || characterConfig;
+      const bob = (frame === 1 || frame === 3) ? -1 : 0;
+      const swing = frame === 1 ? 2 : frame === 3 ? -2 : 0;
+      const isLeft = dir === DIR.LEFT;
+      const isRight = dir === DIR.RIGHT;
+      const isUp = dir === DIR.UP;
+
+      // Derived shades from the 4 customizable base colors.
+      const coatMain = palette.coatMain, hatMain = palette.hatMain, skin = palette.skin, hair = palette.hair;
+      const coatHi = shadeColor(coatMain, 22);
+      const coatMid = shadeColor(coatMain, 40);
+      const coatDark = shadeColor(coatMain, -55);
+      const coatTail = shadeColor(coatMain, -40);
+      const coatTailDark = shadeColor(coatMain, -62);
+      const coatSeamLight = shadeColor(coatMain, 35);
+      const coatSeamDark = shadeColor(coatMain, -20);
+      const coatLapel = shadeColor(coatMain, -30);
+      const coatSleeve = shadeColor(coatMain, -18);
+      const coatSleeveMid = shadeColor(coatMain, 5);
+      const packMain = shadeColor(coatMain, -12);
+      const packMid = shadeColor(coatMain, 15);
+      const packHi = shadeColor(coatMain, 30);
+
+      const hatBrimShadow = shadeColor(hatMain, -55);
+      const hatBrimMid = shadeColor(hatMain, -35);
+      const hatCrownTop = shadeColor(hatMain, 25);
+      const hatBand = shadeColor(hatMain, -40);
+      const hatUnder = shadeColor(hatMain, -50);
+      const hatTrim = shadeColor(hatMain, -8);
+
+      const skinShadow1 = shadeColor(skin, -12);
+      const skinShadow2 = shadeColor(skin, -20);
+      const skinShadow3 = shadeColor(skin, -35);
+      const skinHi = shadeColor(skin, 14);
+
+      let p = '';
+      const add = (x,y,w,h,c) => p += r(x, y + bob, w, h, c);
+
+      const mustache = shadeColor(hair, -8);
+      const mustacheHi = shadeColor(hair, 15);
+
+      // Lean, athletic silhouette — narrow shoulders, narrow waist, longer legs
+      p += `<ellipse cx="16" cy="37" rx="8" ry="2.2" fill="#0a0d10" opacity=".45"/>`;
+
+      // Longer legs
+      add(10 + swing, 26, 4, 10, '#1b2730');
+      add(18 - swing, 26, 4, 10, '#1b2730');
+      add(8 + swing, 35, 7, 2, '#120e0b');
+      add(18 - swing, 35, 7, 2, '#120e0b');
+
+      // Slim duster: broad enough for a coat, but clearly tapered at the waist
+      add(9, 16, 14, 13, coatDark);
+      add(10, 16, 12, 12, coatMain);
+      add(11, 17, 10, 10, coatHi);
+
+      // Tapered coat tails
+      add(9, 27, 5, 6, coatTail);
+      add(18, 27, 5, 6, coatTail);
+      add(15, 27, 2, 7, coatTailDark);
+
+      // Shoulder seams and narrow lapels
+      add(10, 17, 2, 9, coatSeamLight);
+      add(20, 17, 1, 9, coatSeamDark);
+      add(13, 17, 2, 8, coatLapel);
+      add(17, 17, 2, 8, coatLapel);
+
+      // Belt defines the waist
+      add(10, 26, 12, 2, '#5a351d');
+      add(15, 26, 2, 2, '#d7b25a');
+      if (isLeft) add(7, 26, 3, 7, '#392113');
+      else add(22, 26, 3, 7, '#392113');
+
+      // Backpack only from behind
+      if (isUp) {
+        add(9, 17, 14, 9, packMain);
+        add(10, 18, 12, 6, packMid);
+        add(12, 19, 8, 3, packHi);
+        add(22, 11, 2, 15, '#68401f');
+        add(23, 8, 1, 5, '#bbc4c6');
+      }
+
+      // Slim arms + weapon
+      if (isRight) {
+        add(23, 18, 3, 8, coatSleeve);
+        add(25, 20, 3, 3, coatSleeveMid);
+        add(26, 20, 8, 2, '#6b4020');
+        add(32, 20, 4, 2, '#b9c2c4');
+      } else if (isLeft) {
+        add(6, 18, 3, 8, coatSleeve);
+        add(4, 20, 3, 3, coatSleeveMid);
+        add(-2, 20, 8, 2, '#6b4020');
+        add(-6, 20, 4, 2, '#b9c2c4');
+      } else if (!isUp) {
+        add(22, 13, 2, 16, '#6b4020');
+        add(23, 9, 1, 5, '#b9c2c4');
+      }
+
+      // Fur collar and neckerchief
+      add(11, 14, 10, 3, '#c9c1ad');
+      add(12, 16, 8, 3, '#781f24');
+      add(14, 18, 4, 2, '#b93c36');
+
+      // Head: slightly larger relative to the lean body, more professional GBA proportions
+      if (isUp) {
+        add(11, 7, 10, 8, shadeColor(hair, 30));
+        add(10, 9, 12, 5, hair);
+      } else if (isLeft) {
+        add(10, 7, 8, 9, skin);
+        add(8, 10, 3, 3, skinShadow1);
+        add(9, 14, 8, 2, skinShadow2);
+        add(10, 10, 1, 1, '#16120f');
+        // Proud old-west mustache in profile
+        add(8, 13, 5, 1, mustache);
+        add(9, 14, 3, 1, mustache);
+        add(16, 8, 2, 6, hair);
+      } else if (isRight) {
+        add(14, 7, 8, 9, skin);
+        add(21, 10, 3, 3, skinShadow1);
+        add(15, 14, 8, 2, skinShadow2);
+        add(21, 10, 1, 1, '#16120f');
+        // Proud old-west mustache in profile
+        add(19, 13, 5, 1, mustache);
+        add(20, 14, 3, 1, mustache);
+        add(14, 8, 2, 6, hair);
+      } else {
+        // Front face
+        add(11, 7, 10, 9, skin);
+        add(12, 7, 8, 4, skinHi);
+        add(10, 10, 1, 3, skinShadow1);
+        add(21, 10, 1, 3, skinShadow1);
+
+        // Eyes
+        add(12, 10, 1, 1, '#15110e');
+        add(19, 10, 1, 1, '#15110e');
+
+        // Nose
+        add(16, 11, 1, 2, skinShadow2);
+
+        // BIG OLD-WEST MARSHAL MUSTACHE
+        // Dark center under nose
+        add(14, 13, 5, 2, mustache);
+        // Thick sweeping left and right wings
+        add(11, 13, 4, 1, mustache);
+        add(18, 13, 4, 1, mustache);
+        add(12, 14, 3, 2, mustache);
+        add(18, 14, 3, 2, mustache);
+        // Curled outer tips
+        add(10, 12, 2, 1, mustache);
+        add(21, 12, 2, 1, mustache);
+        add(10, 11, 1, 2, mustache);
+        add(22, 11, 1, 2, mustache);
+
+        // Mustache highlight and weathered jaw
+        add(15, 13, 3, 1, mustacheHi);
+        add(13, 15, 6, 1, skinShadow3);
+
+        // Scar
+        add(20, 11, 1, 2, '#84463a');
+      }
+
+      // Hair and sideburns
+      add(11, 6, 10, 2, hair);
+
+      // Classic cattleman hat, scaled to a lean head
+      add(5, 6, 22, 2, hatBrimShadow);
+      add(4, 7, 24, 2, hatBrimMid);
+      add(6, 5, 20, 2, hatTrim);
+      add(10, 0, 12, 7, hatMain);
+      add(12, -1, 8, 2, hatCrownTop);
+      add(15, 0, 2, 5, hatBand);
+      add(10, 5, 12, 2, hatUnder);
+      add(16, 5, 1, 2, '#c2c9ca');
+
+      // Snow
+      add(5, 7, 3, 1, '#dce8eb');
+      add(20, 0, 2, 1, '#dce8eb');
+      add(9, 16, 2, 1, '#dce8eb');
+      add(21, 27, 2, 1, '#dce8eb');
+
+      // Small marshal badge
+      if (!isUp && !isLeft && !isRight) add(18, 20, 2, 2, '#d7b25a');
+
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${RICK_FRAME_W}" height="${RICK_FRAME_H}" viewBox="0 0 ${RICK_FRAME_W} ${RICK_FRAME_H}" shape-rendering="crispEdges">${p}</svg>`;
+    }
+
+    const rickSprites = {
+      [DIR.DOWN]: [],
+      [DIR.UP]: [],
+      [DIR.LEFT]: [],
+      [DIR.RIGHT]: []
+    };
+
+    let rickSpritesReady = false;
+    let rickLoadedCount = 0;
+
+    function buildAllRickSprites(palette) {
+      rickSpritesReady = false;
+      rickLoadedCount = 0;
+      Object.values(DIR).forEach(dir => {
+        for (let frame = 0; frame < 4; frame++) {
+          const img = new Image();
+          img.onload = () => {
+            rickLoadedCount++;
+            if (rickLoadedCount === 16) rickSpritesReady = true;
+          };
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(buildRickSVG(dir, frame, palette));
+          rickSprites[dir][frame] = img;
+        }
+      });
+    }
+
+    buildAllRickSprites(characterConfig);
+
+    function drawRickSprite(cameraX, cameraY) {
+      if (!rickSpritesReady) return;
+
+      const frame = player.isMoving ? player.walkAnimFrame : 0;
+      const img = rickSprites[player.dir][frame];
+
+      // Rick stays intentionally smaller than the enlarged world objects.
+      // His feet remain anchored to the center of his current world tile.
+      const footX = cameraX + (player.pixelX + TILE_SIZE / 2) * WORLD_SCALE;
+      const footY = cameraY + (player.pixelY + TILE_SIZE) * WORLD_SCALE;
+
+      const drawX = Math.round(footX - RICK_DRAW_W / 2);
+      const drawY = Math.round(footY - RICK_DRAW_H + 2);
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, drawX, drawY, RICK_DRAW_W, RICK_DRAW_H);
+    }
+
+    const player = {
+      tileX: 3,
+      tileY: 3,
+      targetX: 3,
+      targetY: 3,
+      pixelX: 3 * TILE_SIZE,
+      pixelY: 3 * TILE_SIZE,
+      dir: DIR.DOWN,
+      isMoving: false,
+      walkSpeed: 2,
+      runSpeed: 4,
+      stepCount: 0,
+      walkAnimFrame: 0,
+      animTimer: 0,
+      
+      hp: 100,
+      temp: 85,
+      torch: 100,
+      ammo: 5,
+      maxClip: 5,
+      reserveAmmo: 15,
+      torches: 2,
+      bandages: 1,
+      scrap: 0,
+      inDarkness: false,
+      tempWarned: false,
+      torchWarned: false
+    };
+
+    let inBattle = false;
+    const battleEnemy = {
+      name: "Frost Shambler",
+      hp: 4,
+      maxHp: 4,
+      hitTimer: 0
+    };
+
+    const snowFlakes = Array.from({ length: 65 }, () => ({
+      x: Math.random() * 800,
+      y: Math.random() * 500,
+      speedX: 2 + Math.random() * 2,
+      speedY: 1 + Math.random() * 2,
+      r: 1 + Math.random() * 1.5,
+      alpha: 0.3 + Math.random() * 0.5
+    }));
+
+    const keys = {};
+    window.addEventListener('keydown', e => {
+      const k = e.key.toLowerCase();
+      keys[k] = true;
+
+      if (!characterCreated) return;
+
+      if (!gameStarted) {
+        if (k === ' ' || k === 'enter') {
+          const activeCard = document.querySelector('.story-card.active');
+          if (activeCard.id === 'sc-1') nextStory(2);
+          else if (activeCard.id === 'sc-2') nextStory(3);
+          else if (activeCard.id === 'sc-3') startTheGame();
+        }
+        return;
+      }
+
+      if (isDead) {
+        if (k === 'r') restartRun();
+        return;
+      }
+      if (actComplete) {
+        if (k === 'r') restartRun();
+        return;
+      }
+
+      if (!inBattle && (k === 'z' || k === ' ')) inspectFrontTile();
+
+      if (inBattle) {
+        if (k === '1') battleAction('shoot');
+        if (k === '2') battleAction('shove');
+        if (k === '3') battleAction('reload');
+        if (k === '4') battleAction('run');
+      }
+    });
+
+    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    function updateUI() {
+      document.getElementById('step-counter').innerText = player.stepCount;
+      document.getElementById('bar-hp').style.width = player.hp + '%';
+      document.getElementById('bar-temp').style.width = player.temp + '%';
+      document.getElementById('bar-torch').style.width = player.torch + '%';
+
+      document.getElementById('ui-ammo').innerText = `${player.ammo} / ${player.maxClip}`;
+      document.getElementById('ui-reserve').innerText = player.reserveAmmo;
+      document.getElementById('ui-torches').innerText = player.torches;
+      document.getElementById('ui-bandages').innerText = player.bandages;
+      document.getElementById('ui-scrap').innerText = `${player.scrap} / ${GATE_SCRAP_COST}`;
+
+      const tempBar = document.getElementById('bar-temp');
+      tempBar.style.background = player.temp <= 0 ? '#ef4444' : player.temp < 30 ? '#f59e0b' : '#0ea5e9';
+    }
+
+    function updateMovement() {
+      if (!gameStarted || inBattle || isDead || actComplete) return;
+
+      if (player.isMoving) {
+        const speed = keys['shift'] ? player.runSpeed : player.walkSpeed;
+        const targetPixelX = player.targetX * TILE_SIZE;
+        const targetPixelY = player.targetY * TILE_SIZE;
+
+        player.animTimer += speed;
+        if (player.animTimer >= 8) {
+          player.walkAnimFrame = (player.walkAnimFrame + 1) % 4;
+          player.animTimer = 0;
+        }
+
+        if (player.pixelX < targetPixelX) player.pixelX = Math.min(targetPixelX, player.pixelX + speed);
+        else if (player.pixelX > targetPixelX) player.pixelX = Math.max(targetPixelX, player.pixelX - speed);
+
+        if (player.pixelY < targetPixelY) player.pixelY = Math.min(targetPixelY, player.pixelY + speed);
+        else if (player.pixelY > targetPixelY) player.pixelY = Math.max(targetPixelY, player.pixelY - speed);
+
+        if (player.pixelX === targetPixelX && player.pixelY === targetPixelY) {
+          player.tileX = player.targetX;
+          player.tileY = player.targetY;
+          player.isMoving = false;
+          player.stepCount++;
+          player.walkAnimFrame = 0;
+
+          onStepCompleted();
+        }
+      } else {
+        let dx = 0, dy = 0;
+        let newDir = player.dir;
+
+        if (keys['w'] || keys['arrowup']) { dy = -1; newDir = DIR.UP; }
+        else if (keys['s'] || keys['arrowdown']) { dy = 1; newDir = DIR.DOWN; }
+        else if (keys['a'] || keys['arrowleft']) { dx = -1; newDir = DIR.LEFT; }
+        else if (keys['d'] || keys['arrowright']) { dx = 1; newDir = DIR.RIGHT; }
+
+        if (dx !== 0 || dy !== 0) {
+          if (player.dir !== newDir) {
+            player.dir = newDir;
+            return;
+          }
+
+          const destX = player.tileX + dx;
+          const destY = player.tileY + dy;
+
+          if (isWalkable(destX, destY)) {
+            player.targetX = destX;
+            player.targetY = destY;
+            player.isMoving = true;
+          }
+        }
+      }
+    }
+
+    function isWalkable(x, y) {
+      if (x < 0 || x >= MAP_COLS || y < 0 || y >= MAP_ROWS) return false;
+      const tile = map[y * MAP_COLS + x];
+      return tile !== 1 && tile !== 3;
+    }
+
+    function onStepCompleted() {
+      player.torch = Math.max(0, player.torch - 0.4);
+      player.temp = Math.max(0, player.temp - 0.25);
+      player.inDarkness = player.torch <= 0;
+
+      const currentTile = map[player.tileY * MAP_COLS + player.tileX];
+
+      if (currentTile === 4) {
+        player.temp = Math.min(100, player.temp + 20);
+        addLog("Your old timber stove radiates comforting heat.", "success");
+      }
+
+      // Cold warning threshold — fires once, resets once you've warmed back up.
+      if (player.temp < 30 && !player.tempWarned) {
+        player.tempWarned = true;
+        addLog("You're getting dangerously cold. Find warmth soon.", "warning");
+      } else if (player.temp > 55 && player.tempWarned) {
+        player.tempWarned = false;
+      }
+
+      // Sustained freezing is a slow, escapable drain — not an insta-kill.
+      // Reach the stove (or a future campfire) and it stops immediately.
+      if (player.temp <= 0) {
+        player.hp = Math.max(0, player.hp - 2);
+        addLog("Frostbite creeps deeper. The cold is eating at you. (-2 HP)", "danger");
+        if (player.hp <= 0) {
+          updateUI();
+          triggerGameOver("Marshal Vance froze solid somewhere out in the Timber Line, still a long way from the Last Spike.");
+          return;
+        }
+      }
+
+      if (player.torch <= 0 && !player.torchWarned) {
+        player.torchWarned = true;
+        addLog("Your torch has burned out. Whatever's out there finds you easier in the dark.", "warning");
+      } else if (player.torch > 20 && player.torchWarned) {
+        player.torchWarned = false;
+      }
+
+      if (currentTile === 2) {
+        const encounterChance = player.inDarkness ? 0.5 : 0.28;
+        if (Math.random() < encounterChance) {
+          triggerBattle();
+        }
+      }
+
+      updateUI();
+    }
+
+    function inspectFrontTile() {
+      if (!gameStarted || inBattle || isDead || actComplete) return;
+
+      let fx = player.tileX;
+      let fy = player.tileY;
+      if (player.dir === DIR.UP) fy--;
+      if (player.dir === DIR.DOWN) fy++;
+      if (player.dir === DIR.LEFT) fx--;
+      if (player.dir === DIR.RIGHT) fx++;
+      if (fx < 0 || fx >= MAP_COLS || fy < 0 || fy >= MAP_ROWS) { addLog("Nothing scavengeable on this tile."); return; }
+
+      const idx = fy * MAP_COLS + fx;
+      const tile = map[idx];
+      if (tile === 4) {
+        player.temp = 100;
+        addLog("Stoked cabin stove. Body temperature fully restored.", "success");
+      } else if (tile === 5) {
+        map[idx] = 0;
+        player.scrap++;
+        addLog(`Scavenged scrap metal from the wreckage. (+1 Scrap, ${player.scrap}/${GATE_SCRAP_COST})`, "success");
+        if (Math.random() < 0.25) {
+          player.reserveAmmo += 2;
+          addLog("Also found a couple loose .44 cartridges tucked underneath.", "success");
+        }
+      } else if (tile === 3) {
+        if (player.scrap >= GATE_SCRAP_COST) {
+          addLog("You pry the stockade gate open with scavenged scrap. The Last Spike depot lies ahead...", "success");
+          triggerVictory();
+          return;
+        } else {
+          addLog(`Waystation Gate: Heavy iron bolts seal the stockade. Needs scrap to force open. (${player.scrap}/${GATE_SCRAP_COST} scrap collected)`, "warning");
+        }
+      } else if (Math.random() < 0.08) {
+        player.reserveAmmo += 1;
+        addLog("Found a stray .44 cartridge half-buried in the snow. (+1 Cartridge)", "success");
+      } else {
+        addLog("Nothing scavengeable on this tile.");
+      }
+      updateUI();
+    }
+
+    function triggerBattle() {
+      inBattle = true;
+      battleEnemy.hp = 4;
+      battleOverlay.style.display = 'flex';
+      // The battle canvas is sized off battleOverlay's box, which is
+      // display:none until the line above — resize() (specifically the
+      // battle-canvas sizing inside it) must run AFTER that, or the
+      // canvas is stuck at 0x0 and the whole battle scene renders blank.
+      battleCanvas.width = battleOverlay.clientWidth;
+      battleCanvas.height = battleOverlay.clientHeight - 64;
+      addLog("A frozen figure emerges from the whiteout—Ambush!", "danger");
+      updateUI();
+    }
+
+    function battleAction(action) {
+      if (!inBattle) return;
+
+      if (action === 'shoot') {
+        if (player.ammo <= 0) {
+          addLog("*Click* Chamber empty! Need to reload.", "warning");
+          return;
+        }
+        player.ammo--;
+        addLog("Fired .44 round at point blank!", "danger");
+        if (Math.random() < 0.85) {
+          battleEnemy.hp -= 2;
+          battleEnemy.hitTimer = 5;
+          addLog("Lead struck bone! Shambler staggered. (-2 HP)", "warning");
+        } else {
+          addLog("Shot kicked wide through the blizzard. Miss!", "");
+        }
+      } else if (action === 'shove') {
+        battleEnemy.hp -= 1;
+        battleEnemy.hitTimer = 4;
+        addLog("Smashed steel rifle butt across its frozen jaw! (-1 HP)", "warning");
+      } else if (action === 'reload') {
+        const need = player.maxClip - player.ammo;
+        const load = Math.min(need, player.reserveAmmo);
+        player.ammo += load;
+        player.reserveAmmo -= load;
+        addLog(`Chambered ${load} rounds into the tube.`, "success");
+      } else if (action === 'run') {
+        addLog("Scrambled backward into the snow drifts! Escaped combat.", "success");
+        endBattle();
+        return;
+      }
+
+      if (battleEnemy.hp <= 0) {
+        addLog("The shambler collapsed dead into the frost!", "success");
+        player.reserveAmmo += 3;
+        addLog("Looted +3 cartridges from the frozen remnants.", "success");
+        endBattle();
+        return;
+      }
+
+      setTimeout(() => {
+        player.hp = Math.max(0, player.hp - 12);
+        addLog("Shambler raked its decaying claws across your coat! (-12 HP)", "danger");
+        updateUI();
+
+        if (player.hp <= 0) {
+          triggerGameOver("The frozen thing that ambushed Marshal Vance finished the job before he could reload.");
+        }
+      }, 350);
+
+      updateUI();
+    }
+
+    function endBattle() {
+      inBattle = false;
+      battleOverlay.style.display = 'none';
+      updateUI();
+    }
+
+    document.getElementById('b-btn-shoot').onclick = () => battleAction('shoot');
+    document.getElementById('b-btn-shove').onclick = () => battleAction('shove');
+    document.getElementById('b-btn-reload').onclick = () => battleAction('reload');
+    document.getElementById('b-btn-run').onclick = () => battleAction('run');
+
+    function canAct() { return gameStarted && !isDead && !actComplete; }
+
+    document.getElementById('btn-scavenge').onclick = inspectFrontTile;
+    document.getElementById('btn-torch').onclick = () => {
+      if (!canAct()) return;
+      if (player.torches > 0) {
+        player.torches--;
+        player.torch = 100;
+        player.inDarkness = false;
+        player.torchWarned = false;
+        addLog("Ignited fresh pine pitch torch.", "success");
+        updateUI();
+      }
+    };
+    document.getElementById('btn-reload-world').onclick = () => {
+      if (!canAct()) return;
+      const need = player.maxClip - player.ammo;
+      const load = Math.min(need, player.reserveAmmo);
+      player.ammo += load;
+      player.reserveAmmo -= load;
+      addLog(`Chambered ${load} rounds into the tube.`);
+      updateUI();
+    };
+    document.getElementById('btn-bandage').onclick = () => {
+      if (!canAct()) return;
+      if (player.bandages > 0 && player.hp < 100) {
+        player.bandages--;
+        player.hp = Math.min(100, player.hp + 30);
+        addLog("Applied clean bandage. Recovered +30 HP.", "success");
+        updateUI();
+      }
+    };
+    document.getElementById('btn-camp').onclick = () => {
+      if (!canAct()) return;
+      player.temp = 100;
+      addLog("Rested by the warm stove. Temperature restored.", "success");
+      updateUI();
+    };
+
+    // ============================================================
+    // GAME OVER / VICTORY / RESTART
+    // ============================================================
+    function triggerGameOver(cause) {
+      isDead = true;
+      inBattle = false;
+      battleOverlay.style.display = 'none';
+      document.getElementById('gameover-cause').innerText = cause;
+      document.getElementById('gameover-stats').innerText =
+        `Steps survived: ${player.stepCount}  |  Scrap collected: ${player.scrap} / ${GATE_SCRAP_COST}`;
+      document.getElementById('gameover-overlay').style.display = 'flex';
+    }
+
+    function triggerVictory() {
+      actComplete = true;
+      inBattle = false;
+      battleOverlay.style.display = 'none';
+      document.getElementById('victory-stats').innerText =
+        `Steps taken: ${player.stepCount}  |  Scrap collected: ${player.scrap}  |  HP remaining: ${Math.round(player.hp)}`;
+      document.getElementById('victory-overlay').style.display = 'flex';
+      updateUI();
+    }
+
+    function restartRun() {
+      // Keep the player's chosen name/appearance; reset everything else,
+      // including re-scattering scrap piles back onto the map.
+      for (let i = 0; i < map.length; i++) map[i] = ORIGINAL_MAP[i];
+
+      player.tileX = 3; player.tileY = 3;
+      player.targetX = 3; player.targetY = 3;
+      player.pixelX = 3 * TILE_SIZE; player.pixelY = 3 * TILE_SIZE;
+      player.dir = DIR.DOWN;
+      player.isMoving = false;
+      player.stepCount = 0;
+      player.walkAnimFrame = 0;
+      player.animTimer = 0;
+      player.hp = 100;
+      player.temp = 85;
+      player.torch = 100;
+      player.ammo = player.maxClip;
+      player.reserveAmmo = 15;
+      player.torches = 2;
+      player.bandages = 1;
+      player.scrap = 0;
+      player.inDarkness = false;
+      player.tempWarned = false;
+      player.torchWarned = false;
+
+      isDead = false;
+      actComplete = false;
+      inBattle = false;
+
+      document.getElementById('gameover-overlay').style.display = 'none';
+      document.getElementById('victory-overlay').style.display = 'none';
+      logFeed.innerHTML = '';
+      addLog(`${characterConfig.name} shakes off the frost and steps out once more. Act I restarts.`, "success");
+      updateUI();
+    }
+
+    document.getElementById('gameover-restart-btn').onclick = restartRun;
+    document.getElementById('victory-restart-btn').onclick = restartRun;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Camera follows the center of Rick's tile, while the entire world is
+      // rendered larger. This makes the wilderness feel denser and more dramatic.
+      const cameraX = Math.floor(canvas.width / 2 - (player.pixelX + TILE_SIZE / 2) * WORLD_SCALE);
+      const cameraY = Math.floor(canvas.height / 2 - (player.pixelY + TILE_SIZE / 2) * WORLD_SCALE);
+
+      ctx.save();
+      ctx.translate(cameraX, cameraY);
+      ctx.scale(WORLD_SCALE, WORLD_SCALE);
+
+      for (let y = 0; y < MAP_ROWS; y++) {
+        for (let x = 0; x < MAP_COLS; x++) {
+          const tile = map[y * MAP_COLS + x];
+          const px = x * TILE_SIZE;
+          const py = y * TILE_SIZE;
+
+          ctx.fillStyle = (x + y) % 2 === 0 ? '#111722' : '#0e131d';
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+
+          if (tile === 1) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(px + 16, py + 28, 14, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#2d1808';
+            ctx.fillRect(px + 14, py + 20, 4, 8);
+
+            ctx.fillStyle = '#0a1613';
+            ctx.beginPath();
+            ctx.moveTo(px + 2, py + 22); ctx.lineTo(px + 30, py + 22); ctx.lineTo(px + 16, py + 12);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#112920';
+            ctx.beginPath();
+            ctx.moveTo(px + 5, py + 14); ctx.lineTo(px + 27, py + 14); ctx.lineTo(px + 16, py + 5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#234e3d';
+            ctx.beginPath();
+            ctx.moveTo(px + 8, py + 7); ctx.lineTo(px + 24, py + 7); ctx.lineTo(px + 16, py);
+            ctx.closePath();
+            ctx.fill();
+
+            // Snow cap gives each enlarged pine more readable volume.
+            ctx.fillStyle = 'rgba(220, 235, 240, 0.55)';
+            ctx.beginPath();
+            ctx.moveTo(px + 11, py + 8); ctx.lineTo(px + 21, py + 8); ctx.lineTo(px + 16, py + 3);
+            ctx.closePath();
+            ctx.fill();
+          } else if (tile === 2) {
+            ctx.fillStyle = '#1e2838';
+            ctx.beginPath();
+            ctx.ellipse(px + 16, py + 16, 12, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(px + 8, py + 20); ctx.lineTo(px + 10, py + 6);
+            ctx.moveTo(px + 16, py + 22); ctx.lineTo(px + 15, py + 4);
+            ctx.stroke();
+          } else if (tile === 3) {
+            ctx.fillStyle = '#3a2516';
+            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = '#1a1008';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+
+            ctx.fillStyle = '#26170d';
+            ctx.fillRect(px + 4, py, 2, TILE_SIZE);
+            ctx.fillRect(px + 20, py, 2, TILE_SIZE);
+          } else if (tile === 4) {
+            ctx.fillStyle = '#261405';
+            ctx.fillRect(px + 6, py + 18, 20, 5);
+            ctx.fillRect(px + 13, py + 10, 6, 20);
+
+            const flicker = (Math.sin(player.stepCount * 0.8) * 2);
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.arc(px + 16, py + 16, 7 + flicker, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (tile === 5) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(px + 16, py + 26, 12, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#3a3f47';
+            ctx.fillRect(px + 6, py + 16, 12, 9);
+            ctx.fillStyle = '#565d68';
+            ctx.fillRect(px + 8, py + 13, 14, 8);
+            ctx.strokeStyle = '#20242b';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 8, py + 13, 14, 8);
+
+            const glint = 0.5 + Math.sin(player.stepCount * 0.5 + x) * 0.5;
+            ctx.fillStyle = `rgba(147, 197, 253, ${0.3 + glint * 0.4})`;
+            ctx.fillRect(px + 12, py + 15, 3, 2);
+            ctx.fillRect(px + 18, py + 17, 2, 2);
+          }
+        }
+      }
+
+      ctx.restore();
+
+      // --- MARSHAL RICK VANCE SVG SPRITE ---
+      // Drawn after the world layer so his scale is independent of tree/prop scale.
+      drawRickSprite(cameraX, cameraY);
+
+      // Blizzard Snow Flurries
+      ctx.fillStyle = '#ffffff';
+      snowFlakes.forEach(f => {
+        f.x += f.speedX;
+        f.y += f.speedY;
+        if (f.x > canvas.width) f.x = -10;
+        if (f.y > canvas.height) f.y = -10;
+
+        ctx.globalAlpha = f.alpha;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1.0;
+
+      if (player.inDarkness && gameStarted) {
+        ctx.fillStyle = 'rgba(0, 4, 10, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      if (inBattle) {
+        renderBattleScreen();
+      }
+    }
+
+    function renderBattleScreen() {
+      const bw = battleCanvas.width;
+      const bh = battleCanvas.height;
+      bCtx.clearRect(0, 0, bw, bh);
+
+      const bgGrad = bCtx.createLinearGradient(0, 0, 0, bh);
+      bgGrad.addColorStop(0, '#06080d');
+      bgGrad.addColorStop(0.6, '#131924');
+      bgGrad.addColorStop(1, '#080a0f');
+      bCtx.fillStyle = bgGrad;
+      bCtx.fillRect(0, 0, bw, bh);
+
+      bCtx.fillStyle = '#1c2536';
+      bCtx.beginPath();
+      bCtx.ellipse(bw * 0.72, bh * 0.42, 110, 36, 0, 0, Math.PI * 2);
+      bCtx.fill();
+      bCtx.strokeStyle = '#2d3748';
+      bCtx.lineWidth = 2;
+      bCtx.stroke();
+
+      bCtx.fillStyle = '#1c2536';
+      bCtx.beginPath();
+      bCtx.ellipse(bw * 0.28, bh * 0.85, 130, 42, 0, 0, Math.PI * 2);
+      bCtx.fill();
+      bCtx.stroke();
+
+      const ex = bw * 0.72;
+      const ey = bh * 0.38;
+
+      bCtx.save();
+      if (battleEnemy.hitTimer > 0) {
+        bCtx.translate((Math.random() - 0.5) * 8, 0);
+        battleEnemy.hitTimer--;
+      }
+
+      bCtx.fillStyle = '#273123';
+      bCtx.fillRect(ex - 24, ey - 60, 48, 65);
+
+      bCtx.fillStyle = '#4a5944';
+      bCtx.beginPath();
+      bCtx.arc(ex, ey - 78, 20, 0, Math.PI * 2);
+      bCtx.fill();
+
+      bCtx.fillStyle = '#ef4444';
+      bCtx.beginPath();
+      bCtx.arc(ex - 6, ey - 80, 3.5, 0, Math.PI * 2);
+      bCtx.arc(ex + 6, ey - 80, 3.5, 0, Math.PI * 2);
+      bCtx.fill();
+      bCtx.restore();
+
+      const px = bw * 0.28;
+      const py = bh * 0.82;
+
+      // Authentic Cowboy Back-Sprite in Battle
+      bCtx.fillStyle = '#4a3319';
+      bCtx.beginPath();
+      bCtx.moveTo(px - 38, py);
+      bCtx.lineTo(px - 26, py - 90);
+      bCtx.lineTo(px + 26, py - 90);
+      bCtx.lineTo(px + 38, py);
+      bCtx.closePath();
+      bCtx.fill();
+
+      bCtx.fillStyle = '#1f140c';
+      bCtx.beginPath();
+      bCtx.ellipse(px, py - 98, 36, 12, 0, 0, Math.PI * 2);
+      bCtx.fill();
+      bCtx.fillStyle = '#291d12';
+      bCtx.beginPath();
+      bCtx.arc(px, py - 104, 22, Math.PI, 0);
+      bCtx.fill();
+
+      bCtx.fillStyle = '#0f131a';
+      bCtx.fillRect(bw * 0.08, bh * 0.12, 220, 52);
+      bCtx.strokeStyle = '#2d3748';
+      bCtx.lineWidth = 2;
+      bCtx.strokeRect(bw * 0.08, bh * 0.12, 220, 52);
+
+      bCtx.fillStyle = '#fff';
+      bCtx.font = '12px Courier New';
+      bCtx.fillText(battleEnemy.name.toUpperCase(), bw * 0.08 + 12, bh * 0.12 + 18);
+
+      bCtx.fillStyle = '#1f2937';
+      bCtx.fillRect(bw * 0.08 + 12, bh * 0.12 + 28, 196, 10);
+      bCtx.fillStyle = '#ef4444';
+      bCtx.fillRect(bw * 0.08 + 12, bh * 0.12 + 28, (battleEnemy.hp / battleEnemy.maxHp) * 196, 10);
+
+      bCtx.fillStyle = '#0f131a';
+      bCtx.fillRect(bw * 0.62, bh * 0.62, 220, 58);
+      bCtx.strokeStyle = '#2d3748';
+      bCtx.strokeRect(bw * 0.62, bh * 0.62, 220, 58);
+
+      bCtx.fillStyle = '#fff';
+      bCtx.fillText(characterConfig.name.toUpperCase(), bw * 0.62 + 12, bh * 0.62 + 18);
+
+      bCtx.fillStyle = '#1f2937';
+      bCtx.fillRect(bw * 0.62 + 12, bh * 0.62 + 26, 196, 10);
+      bCtx.fillStyle = '#10b981';
+      bCtx.fillRect(bw * 0.62 + 12, bh * 0.62 + 26, (player.hp / 100) * 196, 10);
+
+      bCtx.fillStyle = '#f59e0b';
+      bCtx.fillText(`.44 AMMO: ${player.ammo} / ${player.reserveAmmo}`, bw * 0.62 + 12, bh * 0.62 + 48);
+    }
+
+    function loop() {
+      updateMovement();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    initCharCreation();
+    resize();
+    updateUI();
+    loop();
+  </script>
+</body>
+</html>
