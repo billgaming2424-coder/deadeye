@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <!-- iOS Safari has no JS Fullscreen API for arbitrary elements; these let the game
+       launch truly fullscreen/standalone when added to the Home Screen instead. -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DEADEYE">
+  <meta name="theme-color" content="#0a0704">
   <title>DEADEYE // Act I: The Timber Line</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -263,17 +270,30 @@
       color: var(--text-main);
       font-family: var(--font-stack);
       font-size: 11px;
-      padding: 7px 4px;
-      border-radius: 2px;
+      padding: 7px 10px;
+      border-radius: 3px;
       cursor: pointer;
       text-align: center;
-      transition: all 0.1s ease;
+      letter-spacing: .3px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 1px 2px rgba(0,0,0,.4);
+      transition: background .12s ease, border-color .12s ease, color .12s ease, transform .08s ease, box-shadow .12s ease;
     }
 
     .cmd-btn:hover {
       background: #2a1d10;
       border-color: var(--accent-amber);
       color: #fff;
+    }
+
+    .cmd-btn:active { transform: translateY(1px); box-shadow: inset 0 1px 3px rgba(0,0,0,.4); }
+
+    /* Toggle-style buttons (music/sfx): dim + muted while off, warm/lit while on -
+       so state reads at a glance instead of relying on squinting at the label text. */
+    .cmd-btn.cmd-btn-toggle { color: var(--text-muted); }
+    .cmd-btn.cmd-btn-toggle.is-on {
+      border-color: var(--accent-amber);
+      background: linear-gradient(180deg, #3a2a14, #241708);
+      color: var(--accent-gold);
     }
 
     .cmd-btn.cmd-btn-primary {
@@ -367,8 +387,11 @@
     .pause-card h2 { font-family: var(--font-display); color: var(--accent-gold); letter-spacing: 4px; font-size: 22px; margin-bottom: 10px; }
     .pause-card p { color: var(--text-muted); font-size: 11px; margin-bottom: 14px; }
     .pause-card .cmd-btn { width: 100%; margin-top: 7px; padding: 9px; }
-    #hud-controls { display:flex; gap:6px; align-items:center; }
+    #hud-controls { display:flex; gap:14px; align-items:center; }
     #hud-controls .cmd-btn { padding:5px 8px; font-size:10px; }
+    /* Visually separates status readouts (act/step/co-op) from the actionable
+       buttons, so the top bar reads as two groups instead of one crowded row. */
+    .hud-actions { display:flex; gap:6px; align-items:center; padding-left:14px; border-left:1px solid var(--border-color); }
 
 
 
@@ -440,22 +463,33 @@
     .touch-small { font-size:9px; font-weight:bold; letter-spacing:.3px; }
     @media (max-width: 760px), (pointer: coarse) {
       body { align-items:stretch; height:100dvh; overflow:hidden; }
-      #game-container { width:100vw; height:100dvh; border:0; grid-template-rows:42px 1fr 108px; box-shadow:none; }
-      header#hud-top { padding:0 7px; font-size:9px; gap:4px; }
+      #game-container {
+        width:100vw; height:100dvh; border:0; box-shadow:none;
+        grid-template-rows: calc(46px + env(safe-area-inset-top)) 1fr calc(108px + env(safe-area-inset-bottom));
+      }
+      header#hud-top {
+        padding: env(safe-area-inset-top) max(7px, env(safe-area-inset-right)) 0 max(7px, env(safe-area-inset-left));
+        font-size:9px; gap:4px;
+      }
       .vitals-group { gap:5px; }
       .vital-bar { gap:3px; }
       .bar-track { width:42px; height:7px; }
       #env-status { display:none; }
-      #hud-controls { gap:3px; }
-      #hud-controls .cmd-btn { padding:5px 5px; font-size:8px; }
-      #btn-fullscreen { display:none; }
-      main#viewport-container { grid-template-columns:1fr; }
-      #sidebar-panel { display:none; }
-      footer#hud-bottom { grid-template-columns:1fr 1fr; grid-template-rows:1fr; height:108px; padding:6px 7px; gap:7px; }
+      #hud-controls { gap:6px; }
+      #hud-controls .cmd-btn { padding:6px 6px; font-size:8px; }
+      .hud-actions { gap:4px; padding-left:6px; }
+      /* Fullscreen now works on mobile too (real Fullscreen API on Android/iPad,
+         Add-to-Home-Screen guidance on iPhone) - see the click handler in JS. */
+      footer#hud-bottom {
+        grid-template-columns:1fr 1fr; grid-template-rows:1fr;
+        height:calc(108px + env(safe-area-inset-bottom));
+        padding:6px max(7px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left));
+        gap:7px;
+      }
       footer#hud-bottom .deck-panel:nth-child(2) { display:none; }
       footer#hud-bottom .deck-panel:nth-child(3) { display:none; }
-      .command-grid { gap:4px; }
-      .cmd-btn { font-size:10px; padding:6px 3px; min-height:34px; }
+      .command-grid { gap:6px; }
+      .cmd-btn { font-size:10px; padding:8px 3px; min-height:38px; }
       #mobile-controls { display:block; }
       #battle-command-bar { grid-template-columns:repeat(2,1fr); height:108px; padding:6px; gap:5px; }
       #battle-canvas { height:calc(100% - 108px); }
@@ -646,10 +680,12 @@
           <span>STEP: <strong id="step-counter" style="color: #f59e0b;">0</strong></span>
         </div>
         <span id="net-indicator">CO-OP: OFFLINE</span>
-        <button class="cmd-btn" id="btn-music">MUSIC: OFF</button>
-        <button class="cmd-btn" id="btn-sfx">SFX: ON</button>
-        <button class="cmd-btn" id="btn-fullscreen" title="Toggle fullscreen">⛶ FULLSCREEN</button>
-        <button class="cmd-btn" id="btn-pause">PAUSE</button>
+        <div class="hud-actions">
+          <button class="cmd-btn cmd-btn-toggle" id="btn-music" title="Toggle music">MUSIC: OFF</button>
+          <button class="cmd-btn cmd-btn-toggle is-on" id="btn-sfx" title="Toggle sound effects">SFX: ON</button>
+          <button class="cmd-btn" id="btn-fullscreen" title="Toggle fullscreen">⛶ FULLSCREEN</button>
+          <button class="cmd-btn cmd-btn-primary" id="btn-pause">PAUSE</button>
+        </div>
       </div>
     </header>
 
@@ -1075,7 +1111,8 @@
     function toggleSfx() { sfxOn = !sfxOn; setSfxButtons(); }
     function setSfxButtons() {
       const label = `SFX: ${sfxOn ? 'ON' : 'OFF'}`;
-      const el = document.getElementById('btn-sfx'); if (el) el.innerText = label;
+      const el = document.getElementById('btn-sfx');
+      if (el) { el.innerText = label; el.classList.toggle('is-on', sfxOn); }
     }
 
     // ============================================================
@@ -1246,7 +1283,8 @@
     function setMusicButtons() {
       const label = `MUSIC: ${musicOn ? 'ON' : 'OFF'}`;
       ['btn-music','btn-title-music'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.innerText = label;
+        const el = document.getElementById(id);
+        if (el) { el.innerText = label; el.classList.toggle('is-on', musicOn); }
       });
     }
     function stopMusic() {
@@ -2528,6 +2566,14 @@
     // letterboxed panels/HUD fill the whole screen rather than the raw canvas alone.
     const btnFullscreen = document.getElementById('btn-fullscreen');
     function isFullscreenActive() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+    // iOS Safari has no JS Fullscreen API for arbitrary elements (only <video>), and
+    // WebKit has confirmed it isn't adding one. The only real "fullscreen" there is
+    // launching from a Home Screen icon (standalone mode), which drops the browser
+    // chrome entirely on its own. iPadOS' desktop-class Safari and Android browsers
+    // support the real API fine, so this only special-cases the iPhone-in-browser case.
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    const hasFullscreenApi = !!(gameContainer.requestFullscreen || gameContainer.webkitRequestFullscreen);
     function updateFullscreenButton() {
       if (!btnFullscreen) return;
       btnFullscreen.textContent = isFullscreenActive() ? '⛶ EXIT FULLSCREEN' : '⛶ FULLSCREEN';
@@ -2535,6 +2581,14 @@
     }
     if (btnFullscreen) {
       btnFullscreen.onclick = () => {
+        if (isStandalone) {
+          addLog('Already fullscreen — launched from your Home Screen icon.', 'success');
+          return;
+        }
+        if (isIOS && !hasFullscreenApi) {
+          addLog('iPhone Safari can\'t fullscreen a webpage directly. Tap Share → Add to Home Screen, then launch DEADEYE from that icon for a true fullscreen game.', 'warning');
+          return;
+        }
         if (!isFullscreenActive()) {
           const req = gameContainer.requestFullscreen || gameContainer.webkitRequestFullscreen;
           if (req) { req.call(gameContainer).catch(() => {}); }
