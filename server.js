@@ -412,14 +412,22 @@ function handleBattleAction(room,player,msg){
   broadcast(room,battlePayload(room));
 }
 
+// Static assets (images) are content-addressed by filename only, not hashed, but they
+// change rarely and re-fetching them on every load is exactly the kind of thing that
+// hurts on mobile data - so they get a long, cache-busted-by-filename-change lifetime.
+// index.html/js/css stay 'no-cache' so a gameplay fix reaches players on their next
+// load without needing a hard refresh.
+const LONG_CACHE_EXTS=new Set(['.png','.jpg','.jpeg','.webp','.ico']);
 const server=http.createServer((req,res)=>{
   const url=req.url==='/'?'/index.html':req.url.split('?')[0];
   const file=path.normalize(path.join(PUBLIC,url));
   if(!file.startsWith(PUBLIC)){res.writeHead(403);return res.end('Forbidden');}
   fs.readFile(file,(err,data)=>{
     if(err){res.writeHead(404);return res.end('Not found');}
-    const types={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.ico':'image/x-icon'};
-    res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-cache'});res.end(data);
+    const ext=path.extname(file);
+    const types={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.ico':'image/x-icon'};
+    const cacheControl=LONG_CACHE_EXTS.has(ext)?'public, max-age=604800':'no-cache';
+    res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream','Cache-Control':cacheControl});res.end(data);
   });
 });
 
