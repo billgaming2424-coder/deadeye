@@ -1096,8 +1096,13 @@
       if (coopStatus) coopStatus.textContent = text;
     }
     function wsUrl() {
+      // Frontend is static (Cloudflare Pages); the co-op server runs separately on Render.
+      // Point at that explicitly, but keep the same-origin path for local dev (running
+      // server.js directly and opening it from that same host).
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${proto}//${location.host}/ws`;
+      const isLocalDev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+      if (isLocalDev) return `${proto}//${location.host}/ws`;
+      return 'wss://deadeye-ikdh.onrender.com/ws';
     }
     function connectCoop(action, roomCode='') {
       const nameInput=document.getElementById('coop-name');
